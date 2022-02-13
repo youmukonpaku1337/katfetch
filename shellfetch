@@ -1,0 +1,87 @@
+#!/bin/bash
+# Set the variables to get distro name, distro id, etc
+source /etc/os-release
+packages=0
+
+# Use the package manager to get amount of installed packages
+if [ -x "$(command -v apk)" ];
+then
+  (( packages=packages+$(apk list --installed | wc -l) ))
+elif [ -x "$(command -v apt)" ]; then
+  (( packages=packages+$(apt list --installed | wc -l) ))
+elif [ -x "$(command -v dnf)" ]; then
+  (( packages=packages+$(dnf list --installed | grep -c -v '^Installed Packages$') ))
+elif [ -x "$(command -v pacman)" ]; then
+  (( packages=packages+$(pacman -Q | wc -l) ))
+elif [ -x "$(command -v zypper)" ]; then
+  (( packages=packages+$(zypper search -i| wc -l) ))
+elif [ -x "$(command -v emerge)" ]; then
+  (( packages=packages+$(find /var/db/pkg/* | wc -l) ))
+elif [ -x "$(command -v nix-store)" ]; then
+  (( packages=packages+$(nix-store -q --references /var/run/current-system/sw | cut -d'-' -f2- | wc -l) ))
+elif [ -x "$(command -v xbps-query)" ]; then
+  (( packages=packages+$(xbps-query -l | awk '{ print $2 }' | xargs -n1 xbps-uhelper getpkgname | wc -l) ))
+else
+  echo "wtf no package manager?!"; exit 1
+fi
+
+# Set variables
+# Get the host hardware
+read -r version <  /sys/devices/virtual/dmi/id/product_version
+read -r name <  /sys/devices/virtual/dmi/id/product_name 
+read -r mobovendor < /sys/devices/virtual/dmi/id/board_vendor
+read -r mobo < /sys/devices/virtual/dmi/id/board_name
+host="$mobovendor $name $version $mobo"
+{
+	set -f
+	set +f -- $host
+	host=
+}
+# Remove generic names
+for word do
+  case $word in
+    (To      | [Bb]e      | [Ff]illed | [Bb]y  | O.E.M.  | OEM  |\
+     Not     | Applicable | Specified | System | Product | Name |\
+     Version | Undefined  | Default   | string | INVALID | �    | os |\
+     Type1ProductConfigId )
+       continue
+     ;;
+  esac
+  host="$host$word "
+done
+
+# It works so don't touch
+gpu=$(lspci -mm | awk -O -F '\"|\" \"|\\(' \ '/"Display|"3D|"VGA/ {a[$0] = $1 " " $3 " " ($(NF-1) ~ /^$|^Device [[:xdigit:]]+$/ ? $4 : $(NF-1))} END { for (i in a) { if (!seen[a[i]]++) { sub("^[^ ]+ ", "", a[i]);print a[i]}}}')
+user_hostname="$(whoami) on $HOSTNAME"
+cpumodel=$(lscpu | grep "Model name" | cut -c 34-)
+kernel=$(uname -r)
+uptime=$(uptime -p | cut -c 4-)
+ram_used=$(free -m | grep Mem | awk -O '{print $3}')
+ram_free=$(free -m | grep Mem | awk -O '{print $2}')
+diskcmd=$(mount | grep '^/')
+disks=$(while read -r line; do df -h $(echo $line | awk -O '{print $3}') | grep '/' ; done <<< $diskcmd)
+disk_size=$(df -h / | grep "/dev" | awk -O '{print $2}')
+[[ -n "$COLOR" ]] || COLOR="\e[36m"
+
+# Print everything
+echo -e "$COLOR"
+figlet "$NAME"
+echo "host: $host"
+echo "user: $user_hostname"
+echo "distro: $PRETTY_NAME"
+echo "kernel: $kernel"
+echo "architecture: $(uname -m)"
+echo "packages: $packages"
+echo "cpu: $cpumodel"
+[[ $(echo "$gpu" | wc -l) -gt 1 ]] && while read -r line; do echo "gpu: ${line}"; done <<< "$gpu" || echo "gpu:$gpu"
+echo "shell: $SHELL"
+echo "uptime: $uptime"
+echo "ram usage: ${ram_used}MB/${ram_free}MB"
+while read -r line
+do
+  disk_used=$(echo "$line" | awk -O '{print $3}')
+  disk_size=$(echo "$line" | awk -O '{print $2}')
+  disk=$(echo "$line" | awk -O '{print $6}')
+  echo "disk $disk usage: $disk_used/$disk_size"
+done <<< "$disks"
+echo -e "\e[0m"
