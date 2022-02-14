@@ -199,7 +199,7 @@ function printOut() {
     center "resolution: $res"
     center "terminal: ${TERM//xterm-/}"
     center "init: $init"
-    [[ "$battery"  == "" ]] || center "battery: $battery"
+    if [ "$battery"  != "" ]; then center "battery: $battery"; fi
     echo -e "$resetColor"
 }
 printOut "$File"
