@@ -21,6 +21,30 @@ function center {
     printf '%*.*s %s %*.*s\n' 0 "$(((termwidth - 2 - ${#1}) / 2))" "$padding" "$1" 0 "$(((termwidth - 1 - ${#1}) / 2))" "$padding"
 }
 
+Err() {
+    printf '%s\n' "$2" 1>&2
+    [ "$1" -gt 0 ] && exit ""$"1"
+}
+
+while [ "$1" ]; do
+    case $1 in
+    --art | -a)
+        File=$2
+        shift
+        ;;
+    --center | -c)
+        Center=true
+        ;;
+    -*)
+        Err 1 'Incorrect option(s) specified.'
+        ;;
+    *)
+        break
+        ;;
+    esac
+    shift
+done
+
 # Use the package manager to get amount of installed packages
 if [ -x "$(command -v apk)" ]; then
     ((packages = packages + $(apk list --installed | wc -l)))
@@ -102,6 +126,9 @@ disk_size=$(df -h / | grep "/dev" | awk -O '{print $2}')
 figlet=$(figlet "$PRETTY_NAME")
 
 function printCenter() {
+    if [ "$1" ]; then
+        figlet=$(cat "$1")
+    fi
     # Print everything
     echo -e "$boldText $bannerTextColor"
     while read -r line; do
@@ -127,12 +154,16 @@ function printCenter() {
     done <<<"$disks"
     while read -r line; do center "resolution: ${line}"; done <<<"$res" || center "resolution: $res"
     center "terminal: ${TERM//xterm-/}"
+    exit 0
 }
 
 function printLeft() {
+    if [ "$1" ]; then
+        figlet=$(cat "$1")
+    fi
     # Print everything
     echo -e "$boldText $bannerTextColor"
-    figlet "$PRETTY_NAME"
+    echo "$figlet"
     echo -e "$resetColor $sysPageColor"
     echo "Host: $host"
     echo "User: $user_hostname"
@@ -153,17 +184,13 @@ function printLeft() {
     done <<<"$disks"
     while read -r line; do echo "resolution: ${line}"; done <<<"$res" || echo "resolution: $res"
     echo "terminal: ${TERM//xterm-/}"
+    exit 0
 }
 
-while true; do
-    case $1 in
-    -c | --center)
-        printCenter
-        exit 0
-        ;;
-    *)
-        printLeft
-        exit 0
-        ;;
-    esac
-done
+if [ $Center ]; then
+    [ -n "$File" ] && [ ! -f "$File" ] && Err 1 'File does not exists'
+    printCenter "$File"
+else
+    [ -n "$File" ] && [ ! -f "$File" ] && Err 1 'File does not exists'
+    printLeft "$File"
+fi
