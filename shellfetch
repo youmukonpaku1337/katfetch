@@ -61,7 +61,7 @@ elif [ -x "$(command -v pacman)" ]; then
 elif [ -x "$(command -v zypper)" ]; then
     ((packages = packages + $(zypper search -i | wc -l)))
 elif [ -x "$(command -v emerge)" ]; then
-    ((packages = packages + $(find /var/db/pkg/* | wc -l)))
+    ((packages = packages + $(q qlist -I | wc -l)))
 elif [ -x "$(command -v nix-store)" ]; then
     ((packages = packages + $(nix-store -q --references /var/run/current-system/sw | cut -d'-' -f2- | wc -l)))
 elif [ -x "$(command -v xbps-query)" ]; then
@@ -180,7 +180,7 @@ function printOut() {
     center "architecture: $(uname -m)"
     center "packages: $packages"
     center "cpu: $cpumodel"
-    while read -r line; do center "GPU: ${line}"; done <<<"$gpu" || center "GPU: $gpu"
+    while read -r line; do center "gpu: ${line}"; done <<<"$gpu" || center "GPU: $gpu"
     center "shell: $SHELL"
     center "uptime: $uptime"
     center "ram usage: ${memory}"
