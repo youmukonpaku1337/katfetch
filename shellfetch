@@ -135,7 +135,6 @@ done <<<"$(free -k | grep Mem)"
 
 mem_used="$((mem_used / 1024))"
 mem_total="$((mem_total / 1024))"
-
 case $memory_unit in
 gib)
     mem_used=$(awk '{printf "%.2f", $1 / $2}' <<<"$mem_used 1024")
@@ -149,7 +148,7 @@ kib)
     mem_label=KiB
     ;;
 esac
-
+printed="no"
 memory="${mem_used}${mem_label:-MiB} / ${mem_total}${mem_label:-MiB} ${mem_perc:+(${mem_perc}%)}"
 
 diskcmd=$(mount | grep '^/')
@@ -158,16 +157,24 @@ disk_size=$(df -h / | grep "/dev" | awk '{print $2}')
 
 init="$(strings /sbin/init | awk 'match($0, /(upstart|systemd|sysinit|runit)/) { print substr($0, RSTART, RLENGTH); exit;  }')" 
 [[ $init == "sysinit" ]] && init="openrc"
+function centerFiglet(){
+     if [ $Center ]; then
+       figlet -w $(tput cols) -c "$1"
+     else
+       figlet "$1"
+     fi
+}
 function printOut() {
-    if [ "$1" ]; then
-        figlet=$(cat "$1")
-    fi
+
     # Print everything
     echo -e "$boldText $bannerTextColor"
-    if [ $Center ]; then
-      figlet -c -w $(tput cols) "${NAME^}"
+    if [ "$1" ]; then
+      while read -r line; do
+          center "$line"
+      done<"$1"
+      printed="yes"
     else
-        figlet "${NAME^}"
+      centerFiglet "$NAME"
     fi
     echo -e "$resetColor $sysPageColor"
     center "host: $host"
