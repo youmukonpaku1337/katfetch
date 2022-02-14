@@ -157,6 +157,7 @@ disk_size=$(df -h / | grep "/dev" | awk '{print $2}')
 
 init="$(strings /sbin/init | awk 'match($0, /(upstart|systemd|sysinit|runit)/) { print substr($0, RSTART, RLENGTH); exit;  }')" 
 [[ $init == "sysinit" ]] && init="openrc"
+source ~/.config/shellfetch/config 2>/dev/null
 function centerFiglet(){
      if [ $Center ]; then
        figlet -w $(tput cols) -c "$1"
