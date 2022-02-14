@@ -110,7 +110,6 @@ else
     now=$(date +%s)
     s=$((now - boot))
 fi
-
 d="$((s / 60 / 60 / 24)) days"
 h="$((s / 60 / 60 % 24)) hours"
 m="$((s / 60 % 60)) minutes"
@@ -118,12 +117,10 @@ m="$((s / 60 % 60)) minutes"
 ((${d/ */} == 1)) && d=${d/s/}
 ((${h/ */} == 1)) && h=${h/s/}
 ((${m/ */} == 1)) && m=${m/s/}
-
 # Hide empty fields.
 ((${d/ */} == 0)) && unset d
 ((${h/ */} == 0)) && unset h
 ((${m/ */} == 0)) && unset m
-
 uptime=${d:+$d, }${h:+$h, }$m
 uptime=${uptime%', '}
 uptime=${uptime:-$s seconds}
@@ -132,7 +129,6 @@ while IFS=":" read -r line; do
     mem_used="$(echo "$line" | awk '{print $3}')"
     mem_total="$(echo "$line" | awk '{print $2}')"
 done <<<"$(free -k | grep Mem)"
-
 mem_used="$((mem_used / 1024))"
 mem_total="$((mem_total / 1024))"
 case $memory_unit in
@@ -150,14 +146,15 @@ kib)
 esac
 printed="no"
 memory="${mem_used}${mem_label:-MiB} / ${mem_total}${mem_label:-MiB} ${mem_perc:+(${mem_perc}%)}"
-
 diskcmd=$(mount | grep '^/')
 disks=$(while read -r line; do df -h "$(echo "$line" | awk '{print $3}')" | grep '/'; done <<<"$diskcmd")
 disk_size=$(df -h / | grep "/dev" | awk '{print $2}')
-
 init="$(strings /sbin/init | awk 'match($0, /(upstart|systemd|sysinit|runit)/) { print substr($0, RSTART, RLENGTH); exit;  }')" 
+battery="$(cat /sys/class/power_supply/BAT0/capacity)%"
 [[ $init == "sysinit" ]] && init="openrc"
 source ~/.config/shellfetch/config 2>/dev/null
+
+
 function centerFiglet(){
      if [ $Center ]; then
        figlet -w $(tput cols) -c "$1"
@@ -202,6 +199,7 @@ function printOut() {
     center "resolution: $res"
     center "terminal: ${TERM//xterm-/}"
     center "init: $init"
+    [[ "$battery"  == "" ]] || center "battery: $battery"
     echo -e "$resetColor"
 }
 printOut "$File"
