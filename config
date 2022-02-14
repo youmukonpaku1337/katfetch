@@ -1,5 +1,5 @@
 # This is the shellfetch config
- File=~/downloads/telegram/ascii.art
- Center=true
- sysPageColor=$(tput setaf 6)
- bannerTextColor=$(tput setaf 6)
+# File=~/downloads/telegram/ascii.art
+# Center=true
+# sysPageColor=$(tput setaf 6)
+# bannerTextColor=$(tput setaf 6)
