@@ -127,4 +127,6 @@ while read -r line; do
     disk=$(echo "$line" | awk -O '{print $6}')
     echo "disk $disk usage: $disk_used/$disk_size"
 done <<<"$disks"
+echo "resolution: $(xrandr | grep '*' | awk '{print $1}')"
+echo "terminal: ${TERM//xterm-/}"
 echo -e "\e[0m"
