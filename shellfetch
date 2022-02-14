@@ -73,16 +73,10 @@ kernel=$(uname -r)
 uptime=$(uptime -p | cut -c 4-)
 while IFS=":" read -r line; do
     mem_used="$(echo "$line" | awk -O '{print $3}')"
-    mem_avail="$(echo "$line" | awk -O '{print $4}')"
     mem_total="$(echo "$line" | awk -O '{print $2}')"
 done <<<"$(free -k | grep Mem)"
 
-if [[ $mem_avail ]]; then
-    mem_used=$(((mem_total - mem_avail) / 1024))
-else
-    mem_used="$((mem_used / 1024))"
-fi
-
+mem_used="$((mem_used / 1024))"
 mem_total="$((mem_total / 1024))"
 
 case $memory_unit in
