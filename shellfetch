@@ -150,7 +150,6 @@ diskcmd=$(mount | grep '^/')
 disks=$(while read -r line; do df -h "$(echo "$line" | awk '{print $3}')" | grep '/'; done <<<"$diskcmd")
 disk_size=$(df -h / | grep "/dev" | awk '{print $2}')
 init="$(strings /sbin/init | awk 'match($0, /(upstart|systemd|sysinit|runit)/) { print substr($0, RSTART, RLENGTH); exit;  }')" 
-battery="$(cat /sys/class/power_supply/BAT0/capacity 2>/dev/null)%"
 [[ $init == "sysinit" ]] && init="openrc"
 source ~/.config/shellfetch/config 2>/dev/null
 
@@ -199,7 +198,7 @@ function printOut() {
     center "resolution: $res"
     center "terminal: ${TERM//xterm-/}"
     center "init: $init"
-    if [ "$battery"  != "" ]; then center "battery: $battery"; fi
+    if [ -f /sys/class/power_supply/BAT0/capacity ]; then center "battery: $(cat /sys/class/power_supply/BAT0/capacity)%"; fi
     echo -e "$resetColor"
 }
 printOut "$File"
