@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 # Set the variables to get distro name, distro id, etc
-# shellcheck disable=SC1091
 source /etc/os-release
 packages=0
 memory_unit="gib"
@@ -15,11 +14,6 @@ sysPageColor=$(tput setaf 6)
 
 # banner color
 bannerTextColor=$(tput setaf 2)
-
-function center {
-    padding="$(printf '%0.0000001s' ' '{1..500})"
-    printf '%*.*s %s %*.*s\n' 0 "$(((termwidth - 2 - ${#1}) / 2))" "$padding" "$1" 0 "$(((termwidth - 1 - ${#1}) / 2))" "$padding"
-}
 
 Err() {
     printf '%s\n' "$2" 1>&2
@@ -45,6 +39,15 @@ while [ "$1" ]; do
     shift
 done
 
+function center {
+    if [ $Center ]; then
+        padding="$(printf '%0.0000001s' ' '{1..500})"
+        printf '%*.*s %s %*.*s\n' 0 "$(((termwidth - 2 - ${#1}) / 2))" "$padding" "$1" 0 "$(((termwidth - 1 - ${#1}) / 2))" "$padding"
+    else
+        printf '%s\n' "$1"
+    fi
+}
+
 # Use the package manager to get amount of installed packages
 if [ -x "$(command -v apk)" ]; then
     ((packages = packages + $(apk list --installed | wc -l)))
@@ -69,10 +72,10 @@ fi
 
 # Set variables
 # Get the host hardware
-read -r version </sys/devices/virtual/dmi/id/product_version
-read -r name </sys/devices/virtual/dmi/id/product_name
-read -r mobovendor </sys/devices/virtual/dmi/id/board_vendor
-read -r mobo </sys/devices/virtual/dmi/id/board_name
+read -r version 2>/dev/null </sys/devices/virtual/dmi/id/product_version
+read -r name 2>/dev/null </sys/devices/virtual/dmi/id/product_name
+read -r mobovendor 2>/dev/null </sys/devices/virtual/dmi/id/board_vendor
+read -r mobo 2>/dev/null </sys/devices/virtual/dmi/id/board_name
 host="$mobovendor $name $version $mobo"
 
 # Remove generic names
@@ -94,7 +97,32 @@ res="$(xrandr | grep -F "*" | awk '{print $1}')"
 user_hostname="$(whoami) on $HOSTNAME"
 cpumodel=$(lscpu | grep "Model name" | cut -c 34-)
 kernel=$(uname -r)
-uptime=$(uptime -p | cut -c 4-)
+if [[ -r /proc/uptime ]]; then
+    s=$(</proc/uptime)
+    s=${s/.*/}
+else
+    boot=$(date -d"$(uptime -s)" +%s)
+    now=$(date +%s)
+    s=$((now - boot))
+fi
+
+d="$((s / 60 / 60 / 24)) days"
+h="$((s / 60 / 60 % 24)) hours"
+m="$((s / 60 % 60)) minutes"
+# Remove plural if < 2.
+((${d/ */} == 1)) && d=${d/s/}
+((${h/ */} == 1)) && h=${h/s/}
+((${m/ */} == 1)) && m=${m/s/}
+
+# Hide empty fields.
+((${d/ */} == 0)) && unset d
+((${h/ */} == 0)) && unset h
+((${m/ */} == 0)) && unset m
+
+uptime=${d:+$d, }${h:+$h, }$m
+uptime=${uptime%', '}
+uptime=${uptime:-$s seconds}
+uptime=${uptime//,/}
 while IFS=":" read -r line; do
     mem_used="$(echo "$line" | awk -O '{print $3}')"
     mem_total="$(echo "$line" | awk -O '{print $2}')"
@@ -123,16 +151,16 @@ diskcmd=$(mount | grep '^/')
 disks=$(while read -r line; do df -h "$(echo "$line" | awk -O '{print $3}')" | grep '/'; done <<<"$diskcmd")
 disk_size=$(df -h / | grep "/dev" | awk -O '{print $2}')
 
-figlet=$(figlet "$PRETTY_NAME")
+figlet=$(figlet "$NAME")
 
-function printCenter() {
-    if [ "$1" ]; then
-        figlet=$(cat "$1")
+function printOut() {
+    if [ "$2" ]; then
+        figlet=$(cat "$2")
     fi
     # Print everything
     echo -e "$boldText $bannerTextColor"
     while read -r line; do
-        center "$line "
+        center "$line"
     done <<<"$figlet"
     echo -e "$resetColor $sysPageColor"
     center "Host: $host"
@@ -154,43 +182,13 @@ function printCenter() {
     done <<<"$disks"
     while read -r line; do center "resolution: ${line}"; done <<<"$res" || center "resolution: $res"
     center "terminal: ${TERM//xterm-/}"
-    exit 0
-}
-
-function printLeft() {
-    if [ "$1" ]; then
-        figlet=$(cat "$1")
-    fi
-    # Print everything
-    echo -e "$boldText $bannerTextColor"
-    echo "$figlet"
-    echo -e "$resetColor $sysPageColor"
-    echo "Host: $host"
-    echo "User: $user_hostname"
-    echo "Distro: $PRETTY_NAME"
-    echo "Kernel: $kernel"
-    echo "Architecture: $(uname -m)"
-    echo "Packages: $packages"
-    echo "CPU: $cpumodel"
-    while read -r line; do echo "GPU: ${line}"; done <<<"$gpu" || echo "GPU: $gpu"
-    echo "Shell: $SHELL"
-    echo "Uptime: $uptime"
-    echo "Ram Usage: ${memory}"
-    while read -r line; do
-        disk_used=$(echo "$line" | awk -O '{print $3}')
-        disk_size=$(echo "$line" | awk -O '{print $2}')
-        disk=$(echo "$line" | awk -O '{print $6}')
-        echo "Partition $disk Usage: $disk_used/$disk_size"
-    done <<<"$disks"
-    while read -r line; do echo "resolution: ${line}"; done <<<"$res" || echo "resolution: $res"
-    echo "terminal: ${TERM//xterm-/}"
-    exit 0
+    echo -e "$resetColor"
 }
 
 if [ $Center ]; then
     [ -n "$File" ] && [ ! -f "$File" ] && Err 1 'File does not exists'
-    printCenter "$File"
+    printOut "$File"
 else
     [ -n "$File" ] && [ ! -f "$File" ] && Err 1 'File does not exists'
-    printLeft "$File"
+    printOut "$File"
 fi
