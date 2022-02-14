@@ -152,7 +152,6 @@ diskcmd=$(mount | grep '^/')
 disks=$(while read -r line; do df -h "$(echo "$line" | awk -O '{print $3}')" | grep '/'; done <<<"$diskcmd")
 disk_size=$(df -h / | grep "/dev" | awk -O '{print $2}')
 
-NAME="postmarketOS"
 figlet=$(figlet "${NAME^}")
 
 function printOut() {
