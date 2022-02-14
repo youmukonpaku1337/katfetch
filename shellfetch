@@ -13,7 +13,7 @@ boldText=$(tput bold)
 sysPageColor=$(tput setaf 6)
 
 # banner color
-bannerTextColor=$(tput setaf 2)
+bannerTextColor=$(tput setaf 12)
 
 Err() {
     printf '%s\n' "$2" 1>&2
@@ -94,7 +94,11 @@ done
 
 # It works so don't touch
 gpu=$(lspci -mm | awk -O -F '\"|\" \"|\\(' \ '/"Display|"3D|"VGA/ {a[$0] = $1 " " $3 " " ($(NF-1) ~ /^$|^Device [[:xdigit:]]+$/ ? $4 : $(NF-1))} END { for (i in a) { if (!seen[a[i]]++) { sub("^[^ ]+ ", "", a[i]);print a[i]}}}')
-res="$(xrandr | grep -F "*" | awk '{print $1}')"
+res="$(xrandr --nograb --current |
+    awk 'match($0,/[0-9]*\.[0-9]*\*/) {
+    printf $1 "@" substr($0,RSTART,RLENGTH) "Hz, "}')"
+res="${res//\*/}"
+res="${res%,*}"
 user_hostname="$(whoami) on $HOSTNAME"
 cpumodel=$(lscpu | grep "Model name" | cut -c 34-)
 kernel=$(uname -r)
@@ -152,7 +156,6 @@ diskcmd=$(mount | grep '^/')
 disks=$(while read -r line; do df -h "$(echo "$line" | awk -O '{print $3}')" | grep '/'; done <<<"$diskcmd")
 disk_size=$(df -h / | grep "/dev" | awk -O '{print $2}')
 
-NAME="postmarketOS"
 figlet=$(figlet "${NAME^}")
 
 function printOut() {
@@ -186,7 +189,7 @@ function printOut() {
         disk=$(echo "$line" | awk -O '{print $6}')
         center "partition $disk usage: $disk_used/$disk_size"
     done <<<"$disks"
-    while read -r line; do center "resolution: ${line}"; done <<<"$res" || center "resolution: $res"
+    center "resolution: $res"
     center "terminal: ${TERM//xterm-/}"
     echo -e "$resetColor"
 }
