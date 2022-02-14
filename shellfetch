@@ -169,30 +169,25 @@ function printOut() {
         echo -e "$figlet "
     fi
     echo -e "$resetColor $sysPageColor"
-    center "Host: $host"
-    center "User: $user_hostname"
-    center "Distro: $PRETTY_NAME"
-    center "Kernel: $kernel"
-    center "Architecture: $(uname -m)"
-    center "Packages: $packages"
-    center "CPU: $cpumodel"
+    center "host: $host"
+    center "user: $user_hostname"
+    center "distro: $PRETTY_NAME"
+    center "kernel: $kernel"
+    center "architecture: $(uname -m)"
+    center "packages: $packages"
+    center "cpu: $cpumodel"
     while read -r line; do center "GPU: ${line}"; done <<<"$gpu" || center "GPU: $gpu"
-    center "Shell: $SHELL"
-    center "Uptime: $uptime"
-    center "Ram Usage: ${memory}"
+    center "shell: $SHELL"
+    center "uptime: $uptime"
+    center "ram usage: ${memory}"
     while read -r line; do
         disk_used=$(echo "$line" | awk -O '{print $3}')
         disk_size=$(echo "$line" | awk -O '{print $2}')
         disk=$(echo "$line" | awk -O '{print $6}')
-        center "Partition $disk Usage: $disk_used/$disk_size"
+        center "partition $disk usage: $disk_used/$disk_size"
     done <<<"$disks"
     while read -r line; do center "resolution: ${line}"; done <<<"$res" || center "resolution: $res"
     center "terminal: ${TERM//xterm-/}"
     echo -e "$resetColor"
 }
-
-if [ $Center ]; then
-    printOut "$File"
-else
-    printOut "$File"
-fi
+printOut "$File"
