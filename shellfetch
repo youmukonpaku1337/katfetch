@@ -138,9 +138,7 @@ function printCenter() {
 function printLeft() {
     # Print everything
     echo -e "$boldText $bannerTextColor"
-    while read -r line; do
-        echo "$line "
-    done <<<"$figlet"
+    figlet "$NAME"
     echo -e "$resetColor $sysPageColor"
     echo "Host: $host"
     echo "User: $user_hostname"
