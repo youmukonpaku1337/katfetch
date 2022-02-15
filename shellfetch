@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 # Set the variables to get distro name, distro id, etc
-# shellcheck disable=all
 source /etc/os-release
 packages=0
 Columns=$(tput cols)
@@ -16,12 +15,13 @@ sysPageColor=$(tput setaf 6)
 # banner color
 bannerTextColor=$(tput setaf 6)
 
-Err() {
+function Err {
     printf '%s\n' "$2" 1>&2
     [ "$1" -gt 0 ] && exit ""$"1"
 }
 
-while [ "$1" ]; do
+function getParams {
+  while [ "$1" ]; do
     case $1 in
     --art | -a)
         File=$2
@@ -36,136 +36,178 @@ while [ "$1" ]; do
         ;;
     *)
         break
-        ;;
+          ;;
     esac
     shift
-done
-
-function PrintLine {
-    Type=$1
-    shift
-    Main=$1
-    shift
-    if [[ $Type == 'Center' ]]; then
-
-        # Get length of plain text characters
-        ArgStr=$*
-        Len=$((${#ArgStr} - $# + 1))
-
-        # Generate Padding
-        printf -v Padding "%$(((Columns - Len - 1) / 2))s"
-
-        # Print Line
-        printf "%s$Main\n" "$Padding" "$@"
-
-    elif [[ $Type == 'Left' ]]; then
-        printf "$Main\n" "$@"
-    fi
+  done
 }
 
-# Use the package manager to get amount of installed packages
-if [ -x "$(command -v apk)" ]; then
+function printLine {
+  Type=$1
+  shift
+  Main=$1
+  shift
+  if [[ $Type == 'Center' ]]; then
+    # Get length of plain text characters
+    ArgStr=$*
+    Len=$((${#ArgStr} - $# + 1))
+
+    # Generate Padding
+    printf -v Padding "%$(((Columns - Len - 1) / 2))s"
+
+    # Print Line
+    printf "%s$Main\n" "$Padding" "$@"
+
+  elif [[ $Type == 'Left' ]]; then
+    printf "$Main\n" "$@"
+  fi
+}
+
+function getPkgs {
+  if [ -x "$(command -v apk)" ]; then
     ((packages = packages + $(apk list --installed | wc -l)))
-elif [ -x "$(command -v apt)" ]; then
+  elif [ -x "$(command -v apt)" ]; then
     ((packages = packages + $(apt list --installed | wc -l)))
-elif [ -x "$(command -v dnf)" ]; then
+  elif [ -x "$(command -v dnf)" ]; then
     ((packages = packages + $(dnf list --installed | grep -c -v '^Installed Packages$')))
-elif [ -x "$(command -v pacman)" ]; then
+  elif [ -x "$(command -v pacman)" ]; then
     ((packages = packages + $(pacman -Q | wc -l)))
-elif [ -x "$(command -v zypper)" ]; then
+  elif [ -x "$(command -v zypper)" ]; then
     ((packages = packages + $(zypper search -i | wc -l)))
-elif [ -x "$(command -v emerge)" ]; then
+  elif [ -x "$(command -v emerge)" ]; then
     ((packages = packages + $(q qlist -I | wc -l)))
-elif [ -x "$(command -v nix-store)" ]; then
+  elif [ -x "$(command -v nix-store)" ]; then
     ((packages = packages + $(nix-store -q --references /var/run/current-system/sw | cut -d'-' -f2- | wc -l)))
-elif [ -x "$(command -v xbps-query)" ]; then
+  elif [ -x "$(command -v xbps-query)" ]; then
     ((packages = packages + $(xbps-query -l | awk '{ print $2 }' | xargs -n1 xbps-uhelper getpkgname | wc -l)))
-else
+  else
     echo "wtf no package manager?!"
     exit 1
-fi
+  fi
+}
 
-# Set variables
-# Get the host hardware
-read -r version 2>/dev/null </sys/devices/virtual/dmi/id/product_version
-read -r name 2>/dev/null </sys/devices/virtual/dmi/id/product_name
-read -r mobovendor 2>/dev/null </sys/devices/virtual/dmi/id/board_vendor
-read -r mobo 2>/dev/null </sys/devices/virtual/dmi/id/board_name
-host="$mobovendor $name $version $mobo"
+function getHost {
+  # Get the host hardware
+  read -r version 2>/dev/null </sys/devices/virtual/dmi/id/product_version
+  read -r name 2>/dev/null </sys/devices/virtual/dmi/id/product_name
+  read -r mobovendor 2>/dev/null </sys/devices/virtual/dmi/id/board_vendor
+  read -r mobo 2>/dev/null </sys/devices/virtual/dmi/id/board_name
+  host="$mobovendor $name $version $mobo"
 
-# Remove generic names
-for word; do
-    case $word in
-    To | [Bb]e | [Ff]illed | [Bb]y | O.E.M. | OEM | \
-        Not | Applicable | Specified | System | Product | Name | \
-        Version | Undefined | Default | string | INVALID | � | os | \
-        Type1ProductConfigId)
-        continue
-        ;;
-    esac
-    host="$host$word "
-done
+  # Remove generic names
+  for word; do
+      case $word in
+      To | [Bb]e | [Ff]illed | [Bb]y | O.E.M. | OEM | \
+          Not | Applicable | Specified | System | Product | Name | \
+          Version | Undefined | Default | string | INVALID | � | os | \
+          Type1ProductConfigId)
+          continue
+          ;;
+      esac
+      host="$host$word "
+  done
+}
 
-# It works so don't touch
-gpu=$(lspci -mm | awk -F '\"|\" \"|\\(' \ '/"Display|"3D|"VGA/ {a[$0] = $1 " " $3 " " ($(NF-1) ~ /^$|^Device [[:xdigit:]]+$/ ? $4 : $(NF-1))} END { for (i in a) { if (!seen[a[i]]++) { sub("^[^ ]+ ", "", a[i]);print a[i]}}}')
-res="$(xrandr --nograb --current |
+function getGPU {
+  gpu=$(lspci -mm | 
+  awk -F '\"|\" \"|\\(' \ '/"Display|"3D|"VGA/ {
+    a[$0] = $1 " " $3 " " ($(NF-1) ~ /^$|^Device [[:xdigit:]]+$/ ? $4 : $(NF-1))
+  }
+  END { for (i in a) {
+    if (!seen[a[i]]++) {
+      sub("^[^ ]+ ", "", a[i]);
+      print a[i]
+  }}}')
+}
+
+function getRes {
+  res="$(xrandr --nograb --current |
     awk 'match($0,/[0-9]*\.[0-9]*\*/) {
     printf $1 "@" substr($0,RSTART,RLENGTH) "Hz, "}')"
-res="${res//\*/}"
-res="${res%,*}"
-user_hostname="$(whoami) on $HOSTNAME"
-cpumodel=$(lscpu | grep "Model name" | cut -c 34-)
-kernel=$(uname -r)
-if [[ -r /proc/uptime ]]; then
+  res="${res//\*/}"
+  res="${res%,*}"
+}
+
+function getUserAndHostname {
+  userHostname="$(whoami) on $HOSTNAME"
+}
+
+function getCPU {
+  cpuModel=$(lscpu | grep "Model name" | cut -c 34-)
+}
+
+function getKernel {
+  kernel=$(uname -r)
+}
+
+function getBattery {
+  battery=$(cat /sys/class/power_supply/BAT0/capacity)
+}
+function getUptime {
+  if [[ -r /proc/uptime ]]; then
     s=$(</proc/uptime)
     s=${s/.*/}
-else
+  else
     boot=$(date -d"$(uptime -s)" +%s)
     now=$(date +%s)
     s=$((now - boot))
-fi
-d="$((s / 60 / 60 / 24)) days"
-h="$((s / 60 / 60 % 24)) hours"
-m="$((s / 60 % 60)) minutes"
-# Remove plural if < 2.
-((${d/ */} == 1)) && d=${d/s/}
-((${h/ */} == 1)) && h=${h/s/}
-((${m/ */} == 1)) && m=${m/s/}
-# Hide empty fields.
-((${d/ */} == 0)) && unset d
-((${h/ */} == 0)) && unset h
-((${m/ */} == 0)) && unset m
-uptime=${d:+$d, }${h:+$h, }$m
-uptime=${uptime%', '}
-uptime=${uptime:-$s seconds}
-uptime=${uptime//,/}
-while IFS=":" read -r line; do
+  fi
+  d="$((s / 60 / 60 / 24)) days"
+  h="$((s / 60 / 60 % 24)) hours"
+  m="$((s / 60 % 60)) minutes"
+  
+  # Remove plural if < 2.
+  ((${d/ */} == 1)) && d=${d/s/}
+  ((${h/ */} == 1)) && h=${h/s/}
+  ((${m/ */} == 1)) && m=${m/s/}
+  
+  # Hide empty fields.
+  ((${d/ */} == 0)) && unset d
+  ((${h/ */} == 0)) && unset h
+  ((${m/ */} == 0)) && unset m
+  uptime=${d:+$d, }${h:+$h, }$m
+  uptime=${uptime%', '}
+  uptime=${uptime:-$s seconds}
+  uptime=${uptime//,/}
+}
+
+function getMemory {
+  while IFS=":" read -r line; do
     mem_used="$(echo "$line" | awk '{print $3}')"
     mem_total="$(echo "$line" | awk '{print $2}')"
-done <<<"$(free -k | grep Mem)"
-mem_used="$((mem_used / 1024))"
-mem_total="$((mem_total / 1024))"
-case $memory_unit in
-gib)
+  done <<<"$(free -k | grep Mem)"
+  mem_used="$((mem_used / 1024))"
+  mem_total="$((mem_total / 1024))"
+  case $memory_unit in
+  gib)
     mem_used=$(awk '{printf "%.2f", $1 / $2}' <<<"$mem_used 1024")
     mem_total=$(awk '{printf "%.2f", $1 / $2}' <<<"$mem_total 1024")
     mem_label=GiB
     ;;
-
-kib)
+  
+  kib)
     mem_used=$((mem_used * 1024))
     mem_total=$((mem_total * 1024))
     mem_label=KiB
     ;;
-esac
-printed="no"
-memory="${mem_used}${mem_label:-MiB} / ${mem_total}${mem_label:-MiB} ${mem_perc:+(${mem_perc}%)}"
-diskcmd=$(mount | grep '^/')
-disks=$(while read -r line; do df -h "$(echo "$line" | awk '{print $3}')" | grep '/'; done <<<"$diskcmd")
-disk_size=$(df -h / | grep "/dev" | awk '{print $2}')
-init="$(strings /sbin/init | awk 'match($0, /(upstart|systemd|sysinit|runit)/) { print substr($0, RSTART, RLENGTH); exit;  }')"
-[[ $init == "sysinit" ]] && init="openrc"
-source ~/.config/shellfetch/config 2>/dev/null
+  esac
+  memory="${mem_used}${mem_label:-MiB} / ${mem_total}${mem_label:-MiB} ${mem_perc:+(${mem_perc}%)}"
+}
+
+function getDisks {
+  diskcmd=$(mount | grep '^/')
+  disks=$(while read -r line; do df -h "$(echo "$line" | awk '{print $3}')" | grep '/'; done <<<"$diskcmd")
+  disk_size=$(df -h / | grep "/dev" | awk '{print $2}')
+}
+
+function getInit {
+  init="$(strings /sbin/init | awk 'match($0, /(upstart|systemd|sysinit|runit)/) { print substr($0, RSTART, RLENGTH); exit;  }')"
+  if [ $init == "sysinit" ]; then init="openrc"; fi
+}
+
+function sourceConfig {
+  source "$1" 2>/dev/null
+}
 
 function centerFiglet() {
     if [ $Center ]; then
@@ -174,52 +216,84 @@ function centerFiglet() {
         figlet "$1"
     fi
 }
-function printOut() {
 
+function printAsciiOrFiglet {
+  if [ "$1" ]; then
+    if [ $Center ]; then
+      Alignment='Center'
+      while read -r line; do
+        printLine "$Alignment" "%s" "$line"
+      done <"$1"
+    else
+      Alignment='Left'
+      cat "$1"
+    fi
+  else
+    if [ $Center ]; then
+      Alignment='Center'
+      centerFiglet "$NAME"
+    else
+      Alignment='Left'
+      centerFiglet "$NAME"
+    fi
+  fi
+}
+function fetch {
+  getParams "$@"
+  getPkgs
+  getGPU
+  getCPU
+  getDisks
+  getInit
+  getHost
+  getUptime
+  getUserAndHostname
+  getKernel
+  getMemory
+  getRes
+  getBattery
+  sourceConfig ~/.config/shellfetch/config
+}
+
+function printDisks {
+  while read -r line; do
+    disk_used=$(echo "$line" | awk '{print $3}')
+    disk_size=$(echo "$line" | awk '{print $2}')
+    disk=$(echo "$line" | awk '{print $6}')
+    printLine "$Alignment" "%s" "partition $disk usage: $disk_used/$disk_size"
+  done <<<"$disks"
+}
+
+function printGPUs {
+  while read -r line; do printLine "$Alignment" "%s" "gpu: ${line}"; done <<<"$gpu" || printLine "$Alignment" "%s" "GPU: $gpu"
+}
+
+function printBattery {
+  if [ -f /sys/class/power_supply/BAT0/capacity ]; then printLine "$Alignment" "%s" "battery: ${battery}%"; fi
+}
+
+function printOut {
     # Print everything
     echo -e "$boldText $bannerTextColor"
-    if [ "$1" ]; then
-        if [ $Center ]; then
-            Alignment='Center'
-            while read -r line; do
-                PrintLine "$Alignment" "%s" "$line"
-            done <"$1"
-        else
-            Alignment='Left'
-            cat "$1"
-        fi
-        printed="yes"
-    else
-        if [ $Center ]; then
-            Alignment='Center'
-            centerFiglet "$NAME"
-        else
-            Alignment='Left'
-            centerFiglet "$NAME"
-        fi
-    fi
+    printAsciiOrFiglet $1
     echo -e "$resetColor $sysPageColor"
-    PrintLine "$Alignment" "%s" "host: $host"
-    PrintLine "$Alignment" "%s" "user: $user_hostname"
-    PrintLine "$Alignment" "%s" "distro: $PRETTY_NAME"
-    PrintLine "$Alignment" "%s" "kernel: $kernel"
-    PrintLine "$Alignment" "%s" "architecture: $(uname -m)"
-    PrintLine "$Alignment" "%s" "packages: $packages"
-    PrintLine "$Alignment" "%s" "cpu: $cpumodel"
-    while read -r line; do PrintLine "$Alignment" "%s" "gpu: ${line}"; done <<<"$gpu" || PrintLine "$Alignment" "%s" "GPU: $gpu"
-    PrintLine "$Alignment" "%s" "shell: $SHELL"
-    PrintLine "$Alignment" "%s" "uptime: $uptime"
-    PrintLine "$Alignment" "%s" "ram usage: ${memory}"
-    while read -r line; do
-        disk_used=$(echo "$line" | awk '{print $3}')
-        disk_size=$(echo "$line" | awk '{print $2}')
-        disk=$(echo "$line" | awk '{print $6}')
-        PrintLine "$Alignment" "%s" "partition $disk usage: $disk_used/$disk_size"
-    done <<<"$disks"
-    PrintLine "$Alignment" "%s" "resolution: $res"
-    PrintLine "$Alignment" "%s" "terminal: ${TERM//xterm-/}"
-    PrintLine "$Alignment" "%s" "init: $init"
-    if [ -f /sys/class/power_supply/BAT0/capacity ]; then PrintLine "$Alignment" "%s" "battery: $(cat /sys/class/power_supply/BAT0/capacity)%"; fi
+    printLine "$Alignment" "%s" "host: $host"
+    printLine "$Alignment" "%s" "user: $userHostname"
+    printLine "$Alignment" "%s" "distro: $PRETTY_NAME"
+    printLine "$Alignment" "%s" "kernel: $kernel"
+    printLine "$Alignment" "%s" "architecture: $(uname -m)"
+    printLine "$Alignment" "%s" "packages: $packages"
+    printLine "$Alignment" "%s" "cpu: $cpuModel"
+    printGPUs
+    printLine "$Alignment" "%s" "shell: $SHELL"
+    printLine "$Alignment" "%s" "uptime: $uptime"
+    printLine "$Alignment" "%s" "ram usage: ${memory}"
+    printDisks
+    printLine "$Alignment" "%s" "resolution: $res"
+    printLine "$Alignment" "%s" "terminal: ${TERM//xterm-/}"
+    printLine "$Alignment" "%s" "init: $init"
+    printBattery
     echo -e "$resetColor"
 }
+fetch $@
 printOut "$File"
