@@ -10,19 +10,19 @@ bannerTextColor=$(tput setaf 6)
 # You can edit this, even add yor own functions in this file, but 
 # take note: the printAsciiOrFiglet is for printing the ascii or figlet and you shouldn't touch it
 printAsciiOrFiglet "$File"
+getHost
+getUserAndHostname
 getPkgs
 getDistro
-getArchitecture
-getGPU
-getCPU
-getDisks
 getInit
-getHost
-getUptime
-getUserAndHostname
 getKernel
-getMemory
+getCPU
+getArchitecture
 getShell
-getRes
 getTerminal
+getGPU
+getUptime
+getDisks
+getMemory
+getRes
 getBattery
