@@ -3,8 +3,8 @@
 # shellcheck disable=all
 source /etc/os-release
 packages=0
+Columns=$(tput cols)
 memory_unit="gib"
-termwidth="$(stty size | cut -d" " -f2)"
 
 # set colors
 resetColor=$(tput sgr0)
@@ -190,8 +190,13 @@ function printOut() {
         fi
         printed="yes"
     else
-        Alignment='Left'
-        centerFiglet "$NAME"
+        if [ $Center ]; then
+            Alignment='Center'
+            centerFiglet "$NAME"
+        else
+            Alignment='Left'
+            centerFiglet "$NAME"
+        fi
     fi
     echo -e "$resetColor $sysPageColor"
     PrintLine "$Alignment" "%s" "host: $host"
