@@ -224,7 +224,7 @@ getInit() {
 
 printAsciiOrFiglet() {
   if [ "$1" == "" ]; then
-    if [ $Center == true ]; then
+    if [ "$Center" == true ]; then
       Alignment='Center'
       echo -e $bannerTextColor
       figlet -w $(tput cols) -c $NAME
