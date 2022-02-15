@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Set the variables to get distro name, distro id, etc
+# shellcheck disable=all
 source /etc/os-release
 packages=0
 memory_unit="gib"
@@ -40,12 +41,25 @@ while [ "$1" ]; do
     shift
 done
 
-function center {
-    if [ $Center ]; then
-        padding="$(printf '%0.0000001s' ' '{1..500})"
-        printf '%*.*s %s %*.*s\n' 0 "$(((termwidth - 2 - ${#1}) / 2))" "$padding" "$1" 0 "$(((termwidth - 1 - ${#1}) / 2))" "$padding"
-    else
-        printf '%s\n' "$1"
+function PrintLine {
+    Type=$1
+    shift
+    Main=$1
+    shift
+    if [[ $Type == 'Center' ]]; then
+
+        # Get length of plain text characters
+        ArgStr=$*
+        Len=$((${#ArgStr} - $# + 1))
+
+        # Generate Padding
+        printf -v Padding "%$(((Columns - Len - 1) / 2))s"
+
+        # Print Line
+        printf "%s$Main\n" "$Padding" "$@"
+
+    elif [[ $Type == 'Left' ]]; then
+        printf "$Main\n" "$@"
     fi
 }
 
@@ -149,56 +163,58 @@ memory="${mem_used}${mem_label:-MiB} / ${mem_total}${mem_label:-MiB} ${mem_perc:
 diskcmd=$(mount | grep '^/')
 disks=$(while read -r line; do df -h "$(echo "$line" | awk '{print $3}')" | grep '/'; done <<<"$diskcmd")
 disk_size=$(df -h / | grep "/dev" | awk '{print $2}')
-init="$(strings /sbin/init | awk 'match($0, /(upstart|systemd|sysinit|runit)/) { print substr($0, RSTART, RLENGTH); exit;  }')" 
+init="$(strings /sbin/init | awk 'match($0, /(upstart|systemd|sysinit|runit)/) { print substr($0, RSTART, RLENGTH); exit;  }')"
 [[ $init == "sysinit" ]] && init="openrc"
 source ~/.config/shellfetch/config 2>/dev/null
 
-
-function centerFiglet(){
-     if [ $Center ]; then
-       figlet -w $(tput cols) -c "$1"
-     else
-       figlet "$1"
-     fi
+function centerFiglet() {
+    if [ $Center ]; then
+        figlet -w $(tput cols) -c "$1"
+    else
+        figlet "$1"
+    fi
 }
 function printOut() {
 
     # Print everything
     echo -e "$boldText $bannerTextColor"
     if [ "$1" ]; then
-      if [ $Center ]; then
-        while read -r line; do
-            center "$line"
-        done<"$1"
-      else
-        cat "$1"
-      fi
-      printed="yes"
+        if [ $Center ]; then
+            Alignment='Center'
+            while read -r line; do
+                PrintLine "$Alignment" "%s" "$line"
+            done <"$1"
+        else
+            Alignment='Left'
+            cat "$1"
+        fi
+        printed="yes"
     else
-      centerFiglet "$NAME"
+        Alignment='Left'
+        centerFiglet "$NAME"
     fi
     echo -e "$resetColor $sysPageColor"
-    center "host: $host"
-    center "user: $user_hostname"
-    center "distro: $PRETTY_NAME"
-    center "kernel: $kernel"
-    center "architecture: $(uname -m)"
-    center "packages: $packages"
-    center "cpu: $cpumodel"
-    while read -r line; do center "gpu: ${line}"; done <<<"$gpu" || center "GPU: $gpu"
-    center "shell: $SHELL"
-    center "uptime: $uptime"
-    center "ram usage: ${memory}"
+    PrintLine "$Alignment" "%s" "host: $host"
+    PrintLine "$Alignment" "%s" "user: $user_hostname"
+    PrintLine "$Alignment" "%s" "distro: $PRETTY_NAME"
+    PrintLine "$Alignment" "%s" "kernel: $kernel"
+    PrintLine "$Alignment" "%s" "architecture: $(uname -m)"
+    PrintLine "$Alignment" "%s" "packages: $packages"
+    PrintLine "$Alignment" "%s" "cpu: $cpumodel"
+    while read -r line; do PrintLine "$Alignment" "%s" "gpu: ${line}"; done <<<"$gpu" || PrintLine "$Alignment" "%s" "GPU: $gpu"
+    PrintLine "$Alignment" "%s" "shell: $SHELL"
+    PrintLine "$Alignment" "%s" "uptime: $uptime"
+    PrintLine "$Alignment" "%s" "ram usage: ${memory}"
     while read -r line; do
         disk_used=$(echo "$line" | awk '{print $3}')
         disk_size=$(echo "$line" | awk '{print $2}')
         disk=$(echo "$line" | awk '{print $6}')
-        center "partition $disk usage: $disk_used/$disk_size"
+        PrintLine "$Alignment" "%s" "partition $disk usage: $disk_used/$disk_size"
     done <<<"$disks"
-    center "resolution: $res"
-    center "terminal: ${TERM//xterm-/}"
-    center "init: $init"
-    if [ -f /sys/class/power_supply/BAT0/capacity ]; then center "battery: $(cat /sys/class/power_supply/BAT0/capacity)%"; fi
+    PrintLine "$Alignment" "%s" "resolution: $res"
+    PrintLine "$Alignment" "%s" "terminal: ${TERM//xterm-/}"
+    PrintLine "$Alignment" "%s" "init: $init"
+    if [ -f /sys/class/power_supply/BAT0/capacity ]; then PrintLine "$Alignment" "%s" "battery: $(cat /sys/class/power_supply/BAT0/capacity)%"; fi
     echo -e "$resetColor"
 }
 printOut "$File"
