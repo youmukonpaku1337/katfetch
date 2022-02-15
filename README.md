@@ -18,4 +18,4 @@ doas ln -s ./shellfetch /usr/bin/shellfetch
 # Screenshots
 ![image](https://user-images.githubusercontent.com/50289495/154148633-ff8cc514-b9a9-45bc-b413-01e8283ff82a.png)
 ![image](https://user-images.githubusercontent.com/50289495/154148717-d12cd636-38b2-4c08-b14f-45c71032584b.png)
-
+![image](https://user-images.githubusercontent.com/50289495/154149197-93b46c70-4f40-417e-b164-76872ff86671.png)
