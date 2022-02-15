@@ -1,5 +1,28 @@
-# This is the shellfetch config
-# File=~/.ascii-art/ascii
-# Center=true
-# sysPageColor=$(tput setaf 6)
-# bannerTextColor=$(tput setaf 6)
+# This is the shellfetch config file
+
+# These are the default colors, you can set them to a tput setaf number or an ansi
+# escape sequence color. Don't comment or delete this cuz you'll have no color
+sysPageColor=$(tput setaf 6)
+bannerTextColor=$(tput setaf 6)
+#Center=true
+#File=~/.ascii
+
+# You can edit this, even add yor own functions in this file, but 
+# take note: the printAsciiOrFiglet is for printing the ascii or figlet and you shouldn't touch it
+printAsciiOrFiglet "$File"
+getPkgs
+getDistro
+getArchitecture
+getGPU
+getCPU
+getDisks
+getInit
+getHost
+getUptime
+getUserAndHostname
+getKernel
+getMemory
+getShell
+getRes
+getTerminal
+getBattery

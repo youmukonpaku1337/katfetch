@@ -1,9 +1,0 @@
-#!/usr/bin/env /bin/bash
-echo "This script will install shellfetch. Ctrl-C of you want to stop it in the next 5 seconds"
-sleep 5
-echo "starting..."
-mkdir ~/.config/shellfetch
-mkdir ~/.ascii-art
-cp ./config ~/.config/shellfetch/
-doas cp ./shellfetch /usr/bin/
-echo "Done! Now, edit the config at ~/.config/shellfetch/config, and get some ascii art"

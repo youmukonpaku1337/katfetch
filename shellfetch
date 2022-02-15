@@ -4,42 +4,41 @@ source /etc/os-release
 packages=0
 Columns=$(tput cols)
 memory_unit="gib"
+XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-${HOME}/.config}
 
 # set colors
 resetColor=$(tput sgr0)
 boldText=$(tput bold)
 
-#color of text
-sysPageColor=$(tput setaf 6)
-
-# banner color
-bannerTextColor=$(tput setaf 6)
-
 Err() {
-    printf '%s\n' "$2" 1>&2
-    [ "$1" -gt 0 ] && exit ""$"1"
+  printf '%s\n' "$2" 1>&2
+  [ "$1" -gt 0 ] && exit ""$"1"
 }
 
-getParams() {
-  while [ "$1" ]; do
-    case $1 in
-    --art | -a)
-        File=$2
-        [ ! "$File" ] || [ ! -f "$File" ] && Err 1 'File does not exists'
-        shift
-        ;;
-    --center | -c)
-        Center=true
-        ;;
-    -*)
-        Err 1 'Incorrect option(s) specified.'
-        ;;
-    *)
-        break
-          ;;
-    esac
+while [ "$1" ]; do
+  case $1 in
+  --art | -a)
+    File=$2
+    [ ! "$File" ] || [ ! -f "$File" ] && Err 1 'File does not exists'
     shift
-  done
+    ;;
+  --center | -c)
+    Center=true
+    ;;
+  -*)
+    Err 1 'Incorrect option(s) specified.'
+    ;;
+  *)
+    break
+    ;;
+  esac
+  shift
+done
+
+get_user_config() {
+  if [[ -f "${XDG_CONFIG_HOME}/shellfetch/config" ]]; then
+    source "${XDG_CONFIG_HOME}/shellfetch/config"
+  fi
 }
 
 printLine() {
@@ -48,6 +47,7 @@ printLine() {
   Main=$1
   shift
   if [[ $Type == 'Center' ]]; then
+
     # Get length of plain text characters
     ArgStr=$*
     Len=$((${#ArgStr} - $# + 1))
@@ -84,6 +84,7 @@ getPkgs() {
     echo "wtf no package manager?!"
     exit 1
   fi
+  printLine "$Alignment" "$boldText $sysPageColor%s$resetColor" "packages: $packages"
 }
 
 getHost() {
@@ -96,21 +97,22 @@ getHost() {
 
   # Remove generic names
   for word; do
-      case $word in
-      To | [Bb]e | [Ff]illed | [Bb]y | O.E.M. | OEM | \
-          Not | Applicable | Specified | System | Product | Name | \
-          Version | Undefined | Default | string | INVALID | � | os | \
-          Type1ProductConfigId)
-          continue
-          ;;
-      esac
-      host="$host$word "
+    case $word in
+    To | [Bb]e | [Ff]illed | [Bb]y | O.E.M. | OEM | \
+      Not | Applicable | Specified | System | Product | Name | \
+      Version | Undefined | Default | string | INVALID | � | os | \
+      Type1ProductConfigId)
+      continue
+      ;;
+    esac
+    host="$host$word "
   done
+  printLine "$Alignment" "$boldText $sysPageColor%s$resetColor" "host: $host"
 }
 
 getGPU() {
-  gpu=$(lspci -mm | 
-  awk -F '\"|\" \"|\\(' \ '/"Display|"3D|"VGA/ {
+  gpu=$(lspci -mm |
+    awk -F '\"|\" \"|\\(' \ '/"Display|"3D|"VGA/ {
     a[$0] = $1 " " $3 " " ($(NF-1) ~ /^$|^Device [[:xdigit:]]+$/ ? $4 : $(NF-1))
   }
   END { for (i in a) {
@@ -118,6 +120,7 @@ getGPU() {
       sub("^[^ ]+ ", "", a[i]);
       print a[i]
   }}}')
+  while read -r line; do printLine "$Alignment" "$boldText $sysPageColor%s$resetColor" "gpu: ${line}"; done <<<"$gpu" || printLine "$Alignment" "$boldText $bannerTextColor%s$resetColor" "GPU: $gpu"
 }
 
 getRes() {
@@ -126,22 +129,27 @@ getRes() {
     printf $1 "@" substr($0,RSTART,RLENGTH) "Hz, "}')"
   res="${res//\*/}"
   res="${res%,*}"
+  printLine "$Alignment" "$boldText $sysPageColor%s$resetColor" "resolution: $res"
 }
 
 getUserAndHostname() {
   userHostname="$(whoami) on $HOSTNAME"
+  printLine "$Alignment" "$boldText $sysPageColor%s$resetColor" "user: $userHostname"
 }
 
 getCPU() {
   cpuModel=$(lscpu | grep "Model name" | cut -c 34-)
+  printLine "$Alignment" "$boldText $sysPageColor%s$resetColor" "cpu: $cpuModel"
 }
 
 getKernel() {
   kernel=$(uname -r)
+  printLine "$Alignment" "$boldText $sysPageColor%s$resetColor" "kernel: $kernel"
 }
 
 getBattery() {
   battery=$(cat /sys/class/power_supply/BAT0/capacity)
+  printBattery
 }
 getUptime() {
   if [[ -r /proc/uptime ]]; then
@@ -155,12 +163,12 @@ getUptime() {
   d="$((s / 60 / 60 / 24)) days"
   h="$((s / 60 / 60 % 24)) hours"
   m="$((s / 60 % 60)) minutes"
-  
+
   # Remove plural if < 2.
   ((${d/ */} == 1)) && d=${d/s/}
   ((${h/ */} == 1)) && h=${h/s/}
   ((${m/ */} == 1)) && m=${m/s/}
-  
+
   # Hide empty fields.
   ((${d/ */} == 0)) && unset d
   ((${h/ */} == 0)) && unset h
@@ -169,6 +177,7 @@ getUptime() {
   uptime=${uptime%', '}
   uptime=${uptime:-$s seconds}
   uptime=${uptime//,/}
+  printLine "$Alignment" "$boldText $sysPageColor%s$resetColor" "uptime: $uptime"
 }
 
 getMemory() {
@@ -184,7 +193,7 @@ getMemory() {
     mem_total=$(awk '{printf "%.2f", $1 / $2}' <<<"$mem_total 1024")
     mem_label=GiB
     ;;
-  
+
   kib)
     mem_used=$((mem_used * 1024))
     mem_total=$((mem_total * 1024))
@@ -192,108 +201,77 @@ getMemory() {
     ;;
   esac
   memory="${mem_used}${mem_label:-MiB} / ${mem_total}${mem_label:-MiB} ${mem_perc:+(${mem_perc}%)}"
+  printLine "$Alignment" "$boldText $sysPageColor%s$resetColor" "ram usage: ${memory}"
 }
 
 getDisks() {
   diskcmd=$(mount | grep '^/')
   disks=$(while read -r line; do df -h "$(echo "$line" | awk '{print $3}')" | grep '/'; done <<<"$diskcmd")
   disk_size=$(df -h / | grep "/dev" | awk '{print $2}')
-}
-
-getInit() {
-  init="$(strings /sbin/init | awk 'match($0, /(upstart|systemd|sysinit|runit)/) { print substr($0, RSTART, RLENGTH); exit;  }')"
-  if [ $init == "sysinit" ]; then init="openrc"; fi
-}
-
-sourceConfig() {
-  source "$1" 2>/dev/null
-}
-
-centerFiglet() {
-    if [ $Center ]; then
-        figlet -w $(tput cols) -c "$1"
-    else
-        figlet "$1"
-    fi
-}
-
-printAsciiOrFiglet() {
-  if [ "$1" ]; then
-    if [ $Center ]; then
-      Alignment='Center'
-      while read -r line; do
-        printLine "$Alignment" "%s" "$line"
-      done <"$1"
-    else
-      Alignment='Left'
-      cat "$1"
-    fi
-  else
-    if [ $Center ]; then
-      Alignment='Center'
-      centerFiglet "$NAME"
-    else
-      Alignment='Left'
-      centerFiglet "$NAME"
-    fi
-  fi
-}
-fetch() {
-  getParams "$@"
-  getPkgs
-  getGPU
-  getCPU
-  getDisks
-  getInit
-  getHost
-  getUptime
-  getUserAndHostname
-  getKernel
-  getMemory
-  getRes
-  getBattery
-  sourceConfig ~/.config/shellfetch/config
-}
-
-printDisks() {
   while read -r line; do
     disk_used=$(echo "$line" | awk '{print $3}')
     disk_size=$(echo "$line" | awk '{print $2}')
     disk=$(echo "$line" | awk '{print $6}')
-    printLine "$Alignment" "%s" "partition $disk usage: $disk_used/$disk_size"
+    printLine "$Alignment" "$boldText $sysPageColor%s$resetColor" "partition $disk usage: $disk_used/$disk_size"
   done <<<"$disks"
 }
 
-printGPUs() {
-  while read -r line; do printLine "$Alignment" "%s" "gpu: ${line}"; done <<<"$gpu" || printLine "$Alignment" "%s" "GPU: $gpu"
+getInit() {
+  init="$(strings /sbin/init | awk 'match($0, /(upstart|systemd|sysinit|runit)/) { print substr($0, RSTART, RLENGTH); exit;  }')"
+  if [ "$init" == "sysinit" ]; then init="openrc"; fi
+  printLine "$Alignment" "$boldText $sysPageColor%s$resetColor" "init: $init"
+}
+
+printAsciiOrFiglet() {
+  if [ "$1" == "" ]; then
+    if [ "$Center"=="true" ]; then
+      Alignment='Center'
+      echo -e $bannerTextColor
+      figlet -w $(tput cols) -c $NAME
+      echo -e $resetColor
+    else
+      Alignment='Left'
+      echo -e $bannerTextColor
+      figlet -w $(tput cols) $NAME
+      echo -e $resetColor
+    fi
+  else
+    if [ "$Center" == "true" ]; then
+      Alignment='Center'
+      echo -e $bannerTextColor
+      while read -r line; do
+        printLine "$Alignment" "$boldText $bannerTextColor%s$resetColor" "$line"
+      done<<<"$(cat $1)"
+      echo -e $resetColor
+    else
+      Alignment='Left'
+      echo -e $bannerTextColor
+      while read -r line; do
+        printLine "$Alignment" "$boldText $bannerTextColor%s$resetColor" "$line"
+      done<<<"$(cat $1)"
+      echo -e $resetColor
+    fi
+  fi
+}
+
+getShell() {
+  printLine "$Alignment" "$boldText $sysPageColor%s$resetColor" "shell: $SHELL"
+}
+
+getDistro() {
+  printLine "$Alignment" "$boldText $sysPageColor%s$resetColor" "distro: $PRETTY_NAME"
+}
+
+getArchitecture() {
+  printLine "$Alignment" "$boldText $sysPageColor%s$resetColor" "architecture: $(uname -m)"
 }
 
 printBattery() {
-  if [ -f /sys/class/power_supply/BAT0/capacity ]; then printLine "$Alignment" "%s" "battery: ${battery}%"; fi
+  if [ -f /sys/class/power_supply/BAT0/capacity ]; then printLine "$Alignment" "$boldText $sysPageColor%s$resetColor" "battery: ${battery}%"; fi
 }
 
-printOut() {
-    # Print everything
-    echo -e "$boldText $bannerTextColor"
-    printAsciiOrFiglet $1
-    echo -e "$resetColor $sysPageColor"
-    printLine "$Alignment" "%s" "host: $host"
-    printLine "$Alignment" "%s" "user: $userHostname"
-    printLine "$Alignment" "%s" "distro: $PRETTY_NAME"
-    printLine "$Alignment" "%s" "kernel: $kernel"
-    printLine "$Alignment" "%s" "architecture: $(uname -m)"
-    printLine "$Alignment" "%s" "packages: $packages"
-    printLine "$Alignment" "%s" "cpu: $cpuModel"
-    printGPUs
-    printLine "$Alignment" "%s" "shell: $SHELL"
-    printLine "$Alignment" "%s" "uptime: $uptime"
-    printLine "$Alignment" "%s" "ram usage: ${memory}"
-    printDisks
-    printLine "$Alignment" "%s" "resolution: $res"
-    printLine "$Alignment" "%s" "terminal: ${TERM//xterm-/}"
-    printLine "$Alignment" "%s" "init: $init"
-    printBattery
-    echo -e "$resetColor"
+getTerminal() {
+  printLine "$Alignment" "$boldText $sysPageColor%s$resetColor" "terminal: ${TERM//xterm-/}"
 }
-fetch $@
-printOut "$File"
+
+get_user_config
