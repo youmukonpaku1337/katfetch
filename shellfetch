@@ -15,12 +15,12 @@ sysPageColor=$(tput setaf 6)
 # banner color
 bannerTextColor=$(tput setaf 6)
 
-function Err {
+Err() {
     printf '%s\n' "$2" 1>&2
     [ "$1" -gt 0 ] && exit ""$"1"
 }
 
-function getParams {
+getParams() {
   while [ "$1" ]; do
     case $1 in
     --art | -a)
@@ -42,7 +42,7 @@ function getParams {
   done
 }
 
-function printLine {
+printLine() {
   Type=$1
   shift
   Main=$1
@@ -63,7 +63,7 @@ function printLine {
   fi
 }
 
-function getPkgs {
+getPkgs() {
   if [ -x "$(command -v apk)" ]; then
     ((packages = packages + $(apk list --installed | wc -l)))
   elif [ -x "$(command -v apt)" ]; then
@@ -86,7 +86,7 @@ function getPkgs {
   fi
 }
 
-function getHost {
+getHost() {
   # Get the host hardware
   read -r version 2>/dev/null </sys/devices/virtual/dmi/id/product_version
   read -r name 2>/dev/null </sys/devices/virtual/dmi/id/product_name
@@ -108,7 +108,7 @@ function getHost {
   done
 }
 
-function getGPU {
+getGPU() {
   gpu=$(lspci -mm | 
   awk -F '\"|\" \"|\\(' \ '/"Display|"3D|"VGA/ {
     a[$0] = $1 " " $3 " " ($(NF-1) ~ /^$|^Device [[:xdigit:]]+$/ ? $4 : $(NF-1))
@@ -120,7 +120,7 @@ function getGPU {
   }}}')
 }
 
-function getRes {
+getRes() {
   res="$(xrandr --nograb --current |
     awk 'match($0,/[0-9]*\.[0-9]*\*/) {
     printf $1 "@" substr($0,RSTART,RLENGTH) "Hz, "}')"
@@ -128,22 +128,22 @@ function getRes {
   res="${res%,*}"
 }
 
-function getUserAndHostname {
+getUserAndHostname() {
   userHostname="$(whoami) on $HOSTNAME"
 }
 
-function getCPU {
+getCPU() {
   cpuModel=$(lscpu | grep "Model name" | cut -c 34-)
 }
 
-function getKernel {
+getKernel() {
   kernel=$(uname -r)
 }
 
-function getBattery {
+getBattery() {
   battery=$(cat /sys/class/power_supply/BAT0/capacity)
 }
-function getUptime {
+getUptime() {
   if [[ -r /proc/uptime ]]; then
     s=$(</proc/uptime)
     s=${s/.*/}
@@ -171,7 +171,7 @@ function getUptime {
   uptime=${uptime//,/}
 }
 
-function getMemory {
+getMemory() {
   while IFS=":" read -r line; do
     mem_used="$(echo "$line" | awk '{print $3}')"
     mem_total="$(echo "$line" | awk '{print $2}')"
@@ -194,22 +194,22 @@ function getMemory {
   memory="${mem_used}${mem_label:-MiB} / ${mem_total}${mem_label:-MiB} ${mem_perc:+(${mem_perc}%)}"
 }
 
-function getDisks {
+getDisks() {
   diskcmd=$(mount | grep '^/')
   disks=$(while read -r line; do df -h "$(echo "$line" | awk '{print $3}')" | grep '/'; done <<<"$diskcmd")
   disk_size=$(df -h / | grep "/dev" | awk '{print $2}')
 }
 
-function getInit {
+getInit() {
   init="$(strings /sbin/init | awk 'match($0, /(upstart|systemd|sysinit|runit)/) { print substr($0, RSTART, RLENGTH); exit;  }')"
   if [ $init == "sysinit" ]; then init="openrc"; fi
 }
 
-function sourceConfig {
+sourceConfig() {
   source "$1" 2>/dev/null
 }
 
-function centerFiglet() {
+centerFiglet() {
     if [ $Center ]; then
         figlet -w $(tput cols) -c "$1"
     else
@@ -217,7 +217,7 @@ function centerFiglet() {
     fi
 }
 
-function printAsciiOrFiglet {
+printAsciiOrFiglet() {
   if [ "$1" ]; then
     if [ $Center ]; then
       Alignment='Center'
@@ -238,7 +238,7 @@ function printAsciiOrFiglet {
     fi
   fi
 }
-function fetch {
+fetch() {
   getParams "$@"
   getPkgs
   getGPU
@@ -255,7 +255,7 @@ function fetch {
   sourceConfig ~/.config/shellfetch/config
 }
 
-function printDisks {
+printDisks() {
   while read -r line; do
     disk_used=$(echo "$line" | awk '{print $3}')
     disk_size=$(echo "$line" | awk '{print $2}')
@@ -264,15 +264,15 @@ function printDisks {
   done <<<"$disks"
 }
 
-function printGPUs {
+printGPUs() {
   while read -r line; do printLine "$Alignment" "%s" "gpu: ${line}"; done <<<"$gpu" || printLine "$Alignment" "%s" "GPU: $gpu"
 }
 
-function printBattery {
+printBattery() {
   if [ -f /sys/class/power_supply/BAT0/capacity ]; then printLine "$Alignment" "%s" "battery: ${battery}%"; fi
 }
 
-function printOut {
+printOut() {
     # Print everything
     echo -e "$boldText $bannerTextColor"
     printAsciiOrFiglet $1
