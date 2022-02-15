@@ -5,7 +5,6 @@ A simple fetch script in BASH
 
 ```sh
 $ sudo install -Dm755 shellcheck /usr/local/bin
-$ mkdir -p ~/.config/shellcheck/
 $ install -Dm600 config ~/.config/shellcheck/
 ```
 
