@@ -266,13 +266,14 @@ getMemory() {
 
 getDisks() {
   diskcmd=$(mount | grep '^/')
-  disks=$(while read -r line; do df -h "$(echo $line | awk '{print $3}')" | grep '/'; done <<<"$diskcmd") | uniq
-  disk_size=$(df -h / | grep "/dev" | awk '{print $2}')
+  disks=$(while read -r line; do df -Th $(echo $line | awk '{print $3}') | grep '/'; done <<<"$diskcmd")
+  disk_size=$(df -Th | grep "/dev" | awk '{print $3}')
   while read -r line; do
-    disk_used=$(echo "$line" | awk '{print $3}')
-    disk_size=$(echo "$line" | awk '{print $2}')
-    disk=$(echo "$line" | awk '{print $6}')
-    printLine "$Alignment" "$boldText $sysPageColor%s$resetColor" "partition $disk usage: $disk_used/$disk_size"
+    fs=$(echo "$line" | awk '{print $2}')
+    disk_used=$(echo "$line" | awk '{print $4}')
+    disk_size=$(echo "$line" | awk '{print $3}')
+    disk=$(echo "$line" | awk '{print $7}')
+    printLine "$Alignment" "$boldText $sysPageColor%s$resetColor" "$fs partition $disk usage: $disk_used/$disk_size"
   done <<<"$disks"
 }
 
