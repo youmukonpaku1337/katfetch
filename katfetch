@@ -1,10 +1,49 @@
 #!/usr/bin/env bash
-# Set the variables to get distro name, distro id, etc
+# set the variables to get distro name, distro id, etc
 source /etc/os-release
 packages=0
 columns=$(tput cols)
 memory_unit="gib"
-config=~/.config/katfetch/config
+configpath=~/.config/katfetch/config
+usage="
+-f or --config: specify config file path
+-g or --force-figlet: force figlet instead of ascii
+-l or --left: print on left
+-c or --center: print on center
+-a or --art: specify ascii art
+"
+read -rd '' config <<'EOF'
+# This is the katfetch config file
+
+# These are the default colors, you can set them to a tput setaf number or an ansi
+# escape sequence color. Don't comment or delete this cuz you'll have no color
+sysPageColor=$(tput setaf 6)
+bannerTextColor=$(tput setaf 6)
+#center=true
+#file=~/.ascii
+
+# You can edit this, even add yor own functions in this file, but 
+# take note: the printAsciiOrFiglet is for printing the ascii or figlet and you shouldn't touch it
+# Also, do not touch the getParams unless you know what you're doing
+getParams $@
+printAsciiOrFiglet "$File"
+getHost
+getUserAndHostname
+getPkgs
+getDistro
+getInit
+getKernel
+getCPU
+getArchitecture
+getShell
+getTerminal
+getGPU
+getUptime
+getDisks
+getMemory
+getRes
+getBattery
+EOF
 
 # set colors
 resetColor=$(tput sgr0)
@@ -19,21 +58,28 @@ getParams() {
   while [ "$1" ]; do
     case $1 in
     --art | -a)
-      file="$2"
+      shift
+      file="$1"
       [ ! "$file" ] || [ ! -f "$file" ] && err 1 'ascii art does not exist'
       ;;
     --center | -c)
       center=true
       ;;
     --config | -f)
-      config="$1"
-      [ ! "$config" ] || [ ! -f "$config" ] && err 1 'config does not exist'
+      shift
+      if [ ! -f $1 ]; then err 1 'config does not exist'
+      else config=$1
+      fi
       ;;
     --left | -l)
       center=false
       ;;
     --force-figlet | -g)
       file=""
+      ;;
+    --help | -h) 
+      echo -e "$sysPageColor $usage $resetColor"
+      exit 0
       ;;
     -*)
       err 1 'Incorrect option(s) specified.'
@@ -68,22 +114,28 @@ printLine() {
   fi
 }
 
+mkConfig() {
+  if [[ ! -f ~/.config/katfetch/config ]]; then
+    printf '%b' "$config" > ~/.config/katfetch/config
+  fi
+}
+
 getPkgs() {
-  if [ -x "$(command -v apk)" ]; then
+  if [[ -x "$(command -v apk)" ]]; then
     ((packages = packages + $(apk list --installed | wc -l)))
-  elif [ -x "$(command -v apt)" ]; then
+  elif [[ -x "$(command -v apt)" ]]; then
     ((packages = packages + $(apt list --installed | wc -l)))
-  elif [ -x "$(command -v dnf)" ]; then
+  elif [[ -x "$(command -v dnf)" ]]; then
     ((packages = packages + $(dnf list --installed | grep -c -v '^Installed Packages$')))
-  elif [ -x "$(command -v pacman)" ]; then
+  elif [[ -x "$(command -v pacman)" ]]; then
     ((packages = packages + $(pacman -Q | wc -l)))
-  elif [ -x "$(command -v zypper)" ]; then
+  elif [[ -x "$(command -v zypper)" ]]; then
     ((packages = packages + $(zypper search -i | wc -l)))
-  elif [ -x "$(command -v emerge)" ]; then
+  elif [[ -x "$(command -v emerge)" ]]; then
     ((packages = packages + $(q qlist -I | wc -l)))
-  elif [ -x "$(command -v nix-store)" ]; then
+  elif [[ -x "$(command -v nix-store)" ]]; then
     ((packages = packages + $(nix-store -q --references /var/run/current-system/sw | cut -d'-' -f2- | wc -l)))
-  elif [ -x "$(command -v xbps-query)" ]; then
+  elif [[ -x "$(command -v xbps-query)" ]]; then
     ((packages = packages + $(xbps-query -l | awk '{ print $2 }' | xargs -n1 xbps-uhelper getpkgname | wc -l)))
   else
     echo "wtf no package manager?!"
@@ -154,7 +206,7 @@ getKernel() {
 
 getBattery() {
   battery=$(cat /sys/class/power_supply/BAT0/capacity 2>/dev/null)
-  if [ -f /sys/class/power_supply/BAT0/capacity ]; then
+  if [[ -f /sys/class/power_supply/BAT0/capacity ]]; then
     printLine "$Alignment" "$boldText $sysPageColor%s$resetColor" "battery: ${battery}%"
   fi
 }
@@ -214,7 +266,7 @@ getMemory() {
 
 getDisks() {
   diskcmd=$(mount | grep '^/')
-  disks=$(while read -r line; do df -h "$(echo "$line" | awk '{print $3}')" | grep '/'; done <<<"$diskcmd")
+  disks=$(while read -r line; do df -h "$(echo $line | awk '{print $3}')" | grep '/'; done <<<"$diskcmd") | uniq
   disk_size=$(df -h / | grep "/dev" | awk '{print $2}')
   while read -r line; do
     disk_used=$(echo "$line" | awk '{print $3}')
@@ -231,7 +283,7 @@ getInit() {
 }
 
 printAsciiOrFiglet() {
-  if [ "$1" == "" ]; then
+  if [[ "$1" == "" ]]; then
     if $center; then
       Alignment='Center'
       echo -e $bannerTextColor
@@ -276,4 +328,5 @@ getTerminal() {
   printLine "$Alignment" "$boldText $sysPageColor%s$resetColor" "terminal: ${TERM//xterm-/}"
 }
 
-source $config
+mkConfig
+source $configpath
