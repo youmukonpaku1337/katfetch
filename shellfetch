@@ -4,7 +4,6 @@ source /etc/os-release
 packages=0
 Columns=$(tput cols)
 memory_unit="gib"
-XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-${HOME}/.config}
 
 # set colors
 resetColor=$(tput sgr0)
@@ -15,25 +14,27 @@ Err() {
   [ "$1" -gt 0 ] && exit ""$"1"
 }
 
-while [ "$1" ]; do
-  case $1 in
-  --art | -a)
-    File=$2
-    [ ! "$File" ] || [ ! -f "$File" ] && Err 1 'File does not exists'
+getParams() {
+  while [ "$1" ]; do
+    case $1 in
+    --art | -a)
+      File=$2
+      [ ! "$File" ] || [ ! -f "$File" ] && Err 1 'File does not exists'
+      shift
+      ;;
+    --center | -c)
+      Center=true
+      ;;
+    -*)
+      Err 1 'Incorrect option(s) specified.'
+      ;;
+    *)
+      break
+      ;;
+    esac
     shift
-    ;;
-  --center | -c)
-    Center=true
-    ;;
-  -*)
-    Err 1 'Incorrect option(s) specified.'
-    ;;
-  *)
-    break
-    ;;
-  esac
-  shift
-done
+  done
+}
 
 printLine() {
   Type=$1
@@ -132,7 +133,7 @@ getUserAndHostname() {
 }
 
 getCPU() {
-  cpuModel=$(cat /proc/cpuinfo | grep 'model name' | uniq | cut -d 12-)
+  cpuModel="$(cat /proc/cpuinfo | grep 'model name' | uniq | cut -b 12-)"
   printLine "$Alignment" "$boldText $sysPageColor%s$resetColor" "cpu: $cpuModel"
 }
 
@@ -142,9 +143,12 @@ getKernel() {
 }
 
 getBattery() {
-  battery=$(cat /sys/class/power_supply/BAT0/capacity)
-  printBattery
+  battery=$(cat /sys/class/power_supply/BAT0/capacity 2>/dev/null)
+  if [ -f /sys/class/power_supply/BAT0/capacity ]; then
+    printLine "$Alignment" "$boldText $sysPageColor%s$resetColor" "battery: ${battery}%"
+  fi
 }
+
 getUptime() {
   if [[ -r /proc/uptime ]]; then
     s=$(</proc/uptime)
@@ -240,9 +244,7 @@ printAsciiOrFiglet() {
     else
       Alignment='Left'
       echo -e $bannerTextColor
-      while read -r line; do
-        printLine "$Alignment" "$boldText $bannerTextColor%s$resetColor" "$line"
-      done<<<"$(cat $1)"
+      cat "$1"
       echo -e $resetColor
     fi
   fi
@@ -260,12 +262,8 @@ getArchitecture() {
   printLine "$Alignment" "$boldText $sysPageColor%s$resetColor" "architecture: $(uname -m)"
 }
 
-printBattery() {
-  if [ -f /sys/class/power_supply/BAT0/capacity ]; then printLine "$Alignment" "$boldText $sysPageColor%s$resetColor" "battery: ${battery}%"; fi
-}
-
 getTerminal() {
   printLine "$Alignment" "$boldText $sysPageColor%s$resetColor" "terminal: ${TERM//xterm-/}"
 }
 
-get_user_config
+source ~/.config/shellfetch/config

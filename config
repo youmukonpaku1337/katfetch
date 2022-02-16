@@ -9,6 +9,8 @@ bannerTextColor=$(tput setaf 6)
 
 # You can edit this, even add yor own functions in this file, but 
 # take note: the printAsciiOrFiglet is for printing the ascii or figlet and you shouldn't touch it
+# Also, do not touch the getParams unless you know what you're doing
+getParams $@
 printAsciiOrFiglet "$File"
 getHost
 getUserAndHostname
