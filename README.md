@@ -1,25 +1,22 @@
-# shellfetch
+# katfetch
 A modular, hackable, and minimal fetch script written in Bash
 
-# How do I install shellfetch?
+# How do I install katfetch?
 First, install the dependencies: xrandr, figlet and bash.
-Then, git clone this repo to somewhere like ~/.shellfetch, symlink the shell script to /usr/bin/shellfetch
+Then, git clone this repo to somewhere like ~/.katfetch, copy the shell script to /usr/bin/katfetch
 and copy
-the example config to ~/.config/shellfetch/.
+the example config to ~/.config/katfetch/.
 If you're stubborn replace doas with the bloated sudo.
 ```
-git clone https://github.com/egor4ka/shellfetch ~/.shellfetch
-cd ~/.shellfetch
-mkdir ~/.config/shellfetch/
-cp ./config ~/.config/shellfetch/
-doas cp ./shellfetch /usr/bin/shellfetch
+git clone https://github.com/egor4ka/katfetch ~/.katfetch
+cd ~/.katfetch
+mkdir ~/.config/katfetch/
+cp ./config ~/.config/katfetch/
+doas cp ./katfetch /usr/bin/katfetch
 ```
 
 # Screenshots
-![image](https://user-images.githubusercontent.com/50289495/154148633-ff8cc514-b9a9-45bc-b413-01e8283ff82a.png)
-![image](https://user-images.githubusercontent.com/50289495/154148717-d12cd636-38b2-4c08-b14f-45c71032584b.png)
-![image](https://user-images.githubusercontent.com/50289495/154149197-93b46c70-4f40-417e-b164-76872ff86671.png)
 
 # Configuration
-You can edit the ~/.config/shellfetch/config file to reorder functions, add your own functions, or remove some.
+You can edit the ~/.config/katfetch/config file to reorder functions, add your own functions, or remove some.
 You can also set ascii art, color and to be centered or not.
