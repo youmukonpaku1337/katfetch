@@ -27,6 +27,7 @@ Flags:
 -l or --left: print on left
 -c or --center: print on center
 -a or --art: specify ascii art
+-h or --help) help
 
 # Configuration
 You can edit the ~/.config/katfetch/config or your own config file to reorder functions, add your own functions, or remove some.
