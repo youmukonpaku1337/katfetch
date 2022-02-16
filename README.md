@@ -28,7 +28,7 @@ Flags:
 -l or --left: print on left
 -c or --center: print on center
 -a or --art: specify ascii art
--h or --help) help
+-h or --help: help
 ```
 
 # Configuration
