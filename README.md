@@ -22,12 +22,14 @@ doas cp ./katfetch /usr/bin/katfetch
 
 # Usage
 Flags:
+```
 -f or --config: specify config file path
 -g or --force-figlet: force figlet instead of ascii
 -l or --left: print on left
 -c or --center: print on center
 -a or --art: specify ascii art
 -h or --help) help
+```
 
 # Configuration
 You can edit the ~/.config/katfetch/config or your own config file to reorder functions, add your own functions, or remove some.
