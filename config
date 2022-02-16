@@ -1,4 +1,4 @@
-# This is the shellfetch config file
+# This is the katfetch config file
 
 # These are the default colors, you can set them to a tput setaf number or an ansi
 # escape sequence color. Don't comment or delete this cuz you'll have no color

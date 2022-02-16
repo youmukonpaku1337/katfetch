@@ -2,14 +2,15 @@
 # Set the variables to get distro name, distro id, etc
 source /etc/os-release
 packages=0
-Columns=$(tput cols)
+columns=$(tput cols)
 memory_unit="gib"
+config=~/.config/katfetch/config
 
 # set colors
 resetColor=$(tput sgr0)
 boldText=$(tput bold)
 
-Err() {
+err() {
   printf '%s\n' "$2" 1>&2
   [ "$1" -gt 0 ] && exit ""$"1"
 }
@@ -18,15 +19,24 @@ getParams() {
   while [ "$1" ]; do
     case $1 in
     --art | -a)
-      File=$2
-      [ ! "$File" ] || [ ! -f "$File" ] && Err 1 'File does not exists'
-      shift
+      file="$2"
+      [ ! "$file" ] || [ ! -f "$file" ] && err 1 'ascii art does not exist'
       ;;
     --center | -c)
-      Center=true
+      center=true
+      ;;
+    --config | -f)
+      config="$1"
+      [ ! "$config" ] || [ ! -f "$config" ] && err 1 'config does not exist'
+      ;;
+    --left | -l)
+      center=false
+      ;;
+    --force-figlet | -g)
+      file=""
       ;;
     -*)
-      Err 1 'Incorrect option(s) specified.'
+      err 1 'Incorrect option(s) specified.'
       ;;
     *)
       break
@@ -37,24 +47,24 @@ getParams() {
 }
 
 printLine() {
-  Type=$1
+  type=$1
   shift
-  Main=$1
+  main=$1
   shift
-  if [[ $Type == 'Center' ]]; then
+  if [[ $type == 'Center' ]]; then
 
     # Get length of plain text characters
-    ArgStr=$*
-    Len=$((${#ArgStr} - $# + 1))
+    argStr=$*
+    len=$((${#argStr} - $# + 1))
 
     # Generate Padding
-    printf -v Padding "%$(((Columns - Len - 1) / 2))s"
+    printf -v padding "%$(((columns - len - 1) / 2))s"
 
     # Print Line
-    printf "%s$Main\n" "$Padding" "$@"
+    printf "%s$main\n" "$padding" "$@"
 
-  elif [[ $Type == 'Left' ]]; then
-    printf "$Main\n" "$@"
+  elif [[ $type == 'Left' ]]; then
+    printf "$main\n" "$@"
   fi
 }
 
@@ -222,7 +232,7 @@ getInit() {
 
 printAsciiOrFiglet() {
   if [ "$1" == "" ]; then
-    if [ "$Center" == true ]; then
+    if $center; then
       Alignment='Center'
       echo -e $bannerTextColor
       figlet -w $(tput cols) -c $NAME
@@ -234,7 +244,7 @@ printAsciiOrFiglet() {
       echo -e $resetColor
     fi
   else
-    if [ $Center == true ]; then
+    if $center; then
       Alignment='Center'
       echo -e $bannerTextColor
       while read -r line; do
@@ -266,4 +276,4 @@ getTerminal() {
   printLine "$Alignment" "$boldText $sysPageColor%s$resetColor" "terminal: ${TERM//xterm-/}"
 }
 
-source ~/.config/shellfetch/config
+source $config
