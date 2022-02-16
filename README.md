@@ -12,7 +12,7 @@ git clone https://github.com/egor4ka/shellfetch ~/.shellfetch
 cd ~/.shellfetch
 mkdir ~/.config/shellfetch/
 cp ./config ~/.config/shellfetch/
-doas ln -s ./shellfetch /usr/bin/shellfetch
+doas cp ./shellfetch /usr/bin/shellfetch
 ```
 
 # Screenshots
