@@ -4,9 +4,12 @@ source /etc/os-release
 packages=0
 columns=$(tput cols)
 memory_unit="gib"
-configpath=~/.config/katfetch/config
+if [[ -z "$configpath" ]]; then
+  configpath=~/.config/katfetch/config
+fi
 usage="
--f or --config: specify config file path
+you can specify config path in configpath env var
+flags:
 -g or --force-figlet: force figlet instead of ascii
 -l or --left: print on left
 -c or --center: print on center
@@ -26,27 +29,23 @@ bannerTextColor=$(tput setaf 6)
 # take note: the printAsciiOrFiglet is for printing the ascii or figlet and you shouldn't touch it
 # Also, do not touch the getParams unless you know what you're doing
 getParams $@
-if [[ !$configpath==~/.config/katfetch/config ]]; then 
-  source $configpath
-else 
-  printAsciiOrFiglet "$File"
-  getHost
-  getUserAndHostname
-  getPkgs
-  getDistro
-  getInit
-  getKernel
-  getCPU
-  getArchitecture
-  getShell
-  getTerminal
-  getGPU
-  getUptime
-  getDisks
-  getMemory
-  getRes
-  getBattery
-fi
+printAsciiOrFiglet "$File"
+getHost
+getUserAndHostname
+getPkgs
+getDistro
+getInit
+getKernel
+getCPU
+getArchitecture
+getShell
+getTerminal
+getGPU
+getUptime
+getDisks
+getMemory
+getRes
+getBattery
 EOF
 
 # set colors
@@ -79,12 +78,6 @@ getParams() {
       echo -e "$sysPageColor $usage $resetColor"
       exit 0
       ;;
-    --config | -f)
-        shift
-        if [ ! -f $1 ]; then err 1 'config does not exist'
-        else configpath=$1
-        fi
-        ;;
     -*)
       err 1 "config not found"
       ;;

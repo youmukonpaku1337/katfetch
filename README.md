@@ -17,9 +17,9 @@ doas cp ./katfetch /usr/bin/katfetch
 ![image](https://user-images.githubusercontent.com/50289495/154301093-7e098a79-d956-4e0f-abc5-7e1658a8b71e.png)
 
 # Usage
-Flags:
 ```
--f or --config: specify config file path
+you can use the configpath env var to specify config path
+flags:
 -g or --force-figlet: force figlet instead of ascii
 -l or --left: print on left
 -c or --center: print on center
