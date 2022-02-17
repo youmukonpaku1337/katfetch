@@ -46,6 +46,7 @@ getDisks
 getMemory
 getRes
 getBattery
+getPlaying
 EOF
 
 # set colors
@@ -116,6 +117,16 @@ mkConfig() {
   if [[ ! -f ~/.config/katfetch/config ]]; then
     mkdir ~/.config/katfetch 2>/dev/null
     printf '%b' "$config" > ~/.config/katfetch/config
+  fi
+}
+
+getPlaying() {
+  title="$(playerctl metadata | grep title | cut -b 40-)"
+  artist="$(playerctl metadata | grep artist | cut -b 40-)"
+  player="$(playerctl metadata | grep artist | awk '{print $1}')"
+  if [[ ! -z "$player" ]] && [[ "$player" != "firefox" ]] && [[ "$player" != "chromium" ]]; then
+    printLine "$Alignment" "$boldText $sysPageColor%s$resetColor" "player: $player"
+    printLine "$Alignment" "$boldText $sysPageColor%s$resetColor" "now playing: $artist - $title"
   fi
 }
 
