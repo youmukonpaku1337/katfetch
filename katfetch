@@ -203,7 +203,7 @@ getUserAndHostname() {
 }
 
 getCPU() {
-  cpuModel="$(cat /proc/cpuinfo | grep 'model name' | uniq | cut -b 12-)"
+  cpuModel="$(cat /proc/cpuinfo | grep 'model name' | uniq | cut -b 14-)"
   printLine "$Alignment" "$boldText $sysPageColor%s$resetColor" "cpu: $cpuModel"
 }
 
