@@ -234,8 +234,6 @@ getGPU() {
       gpu="${gpu/Corporation/}"
       gpu="${gpu/ \(*/}"
       gpu="${gpu/Integrated Graphics Controller/}"
-      gpu="${gpu/*Xeon*/Intel HD Graphics}"
-      gpu="${gpu/*CometLake*/Intel HD Graphics}"
       ;;
 
     *)
