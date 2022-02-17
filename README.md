@@ -2,7 +2,7 @@
 A modular, hackable, and minimal fetch script written in Bash
 
 # How do I install katfetch?
-First, install the dependencies: xrandr, figlet and bash.
+First, install the dependencies: xrandr, figlet, playerctl and bash.
 Then, git clone this repo to somewhere like ~/.katfetch and copy the shell script to /usr/bin/katfetch.
 If you're stubborn replace doas with the bloated sudo.
 ```
