@@ -67,7 +67,7 @@ niceMessage() {
     echo ""
     printLine "$Alignment" "$boldText $sysPageColor%s$resetColor" "${morning[RANDOM%${#morning[@]}]}"
   else
-    evening=('haha evening >_<' 'emacs is an os' 'sudo rm -rf /*' 'wher coffe' 'oooo sunset' 'i want some tea' 'please put some cake in the cd drive' 'm4st3r h4xx0r' 'katt0 is 3lit3' 'honkhonk' 'good evening >_<' 'dont mind me im just a script hehe >_<' 'please gib cake >_<')
+    evening=('get some sleep' 'how do i exit vim help' '>_<' 'haha zsh go brrr' 'honkkkkkkkkkkkkkk' 'goos' 'haha evening >_<' 'emacs is an os' 'sudo rm -rf /*' 'wher coffe' 'oooo sunset' 'i want some tea' 'please put some cake in the cd drive' 'm4st3r h4xx0r' 'katt0 is 3lit3' 'honkhonk' 'good evening >_<' 'dont mind me im just a script hehe >_<' 'please gib cake >_<')
     echo ""
     printLine "$Alignment" "$boldText $sysPageColor%s$resetColor" "${evening[RANDOM%${#evening[@]}]}"
   fi
