@@ -61,7 +61,7 @@ err() {
 
 niceMessage() {
   timern=$(date +'%p')
-  if [[ "$timern" == "AM" ]]; then
+  if [[ "$timern^^" == "AM" ]]; then
     echo a
     morning=('gib coffe' 'good mernink >_<' 'oooo sunrise' 'i wonder if it is night or day' 'im just a script dont mind me' 'haha ai will take over world' 'sudo rm -rf /*' 'honk' 'honkhonk' 'very stoopid msg' 'u drink tea? >_<')
     echo ""
