@@ -161,19 +161,18 @@ getHost() {
   read -r mobovendor 2>/dev/null </sys/devices/virtual/dmi/id/board_vendor
   read -r mobo 2>/dev/null </sys/devices/virtual/dmi/id/board_name
   host="$mobovendor $name $version $mobo"
-
-  # remove generic names
-  for word; do
-    case $word in
-    To | [Bb]e | [Ff]illed | [Bb]y | O.E.M. | OEM | \
-      Not | Applicable | Specified | System | Product | Name | \
-      Version | Undefined | Default | string | INVALID | � | os | \
-      Type1ProductConfigId)
-      continue
-      ;;
-    esac
-    host="$host$word "
-  done
+  host=${host//To be filled by O.E.M./}
+  host=${host//To Be Filled*/}
+  host=${host//OEM*/}
+  host=${host//Not Applicable/}
+  host=${host//System Product Name/}
+  host=${host//System Version/}
+  host=${host//Undefined/}
+  host=${host//Default string/}
+  host=${host//Not Specified/}
+  host=${host//Type1ProductConfigId/}
+  host=${host//INVALID/}
+  host=${host//All Series/}
   printLine "$Alignment" "$boldText $sysPageColor%s$resetColor" "host: $host"
 }
 
