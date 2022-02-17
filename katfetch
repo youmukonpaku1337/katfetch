@@ -26,23 +26,27 @@ bannerTextColor=$(tput setaf 6)
 # take note: the printAsciiOrFiglet is for printing the ascii or figlet and you shouldn't touch it
 # Also, do not touch the getParams unless you know what you're doing
 getParams $@
-printAsciiOrFiglet "$File"
-getHost
-getUserAndHostname
-getPkgs
-getDistro
-getInit
-getKernel
-getCPU
-getArchitecture
-getShell
-getTerminal
-getGPU
-getUptime
-getDisks
-getMemory
-getRes
-getBattery
+if [[ !$configpath==~/.config/katfetch/config ]]; then 
+  source $configpath
+else 
+  printAsciiOrFiglet "$File"
+  getHost
+  getUserAndHostname
+  getPkgs
+  getDistro
+  getInit
+  getKernel
+  getCPU
+  getArchitecture
+  getShell
+  getTerminal
+  getGPU
+  getUptime
+  getDisks
+  getMemory
+  getRes
+  getBattery
+fi
 EOF
 
 # set colors
@@ -65,12 +69,6 @@ getParams() {
     --center | -c)
       center=true
       ;;
-    --config | -f)
-      shift
-      if [ ! -f $1 ]; then err 1 'config does not exist'
-      else config=$1
-      fi
-      ;;
     --left | -l)
       center=false
       ;;
@@ -81,8 +79,14 @@ getParams() {
       echo -e "$sysPageColor $usage $resetColor"
       exit 0
       ;;
+    --config | -f)
+        shift
+        if [ ! -f $1 ]; then err 1 'config does not exist'
+        else configpath=$1
+        fi
+        ;;
     -*)
-      err 1 'Incorrect option(s) specified.'
+      err 1 "config not found"
       ;;
     *)
       break
