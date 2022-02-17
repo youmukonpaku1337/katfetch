@@ -47,6 +47,7 @@ getMemory
 getRes
 getBattery
 getPlaying
+niceMessage
 EOF
 
 # set colors
@@ -56,6 +57,20 @@ boldText=$(tput bold)
 err() {
   printf '%s\n' "$2" 1>&2
   [ "$1" -gt 0 ] && exit ""$"1"
+}
+
+niceMessage() {
+  timern=$(date +'%p')
+  if [[ "$timern" == "AM" ]]; then
+    echo a
+    morning=('gib coffe' 'good mernink >_<' 'oooo sunrise' 'i wonder if it is night or day' 'im just a script dont mind me' 'haha ai will take over world' 'sudo rm -rf /*' 'honk' 'honkhonk' 'very stoopid msg' 'u drink tea? >_<')
+    echo ""
+    printLine "$Alignment" "$boldText $sysPageColor%s$resetColor" "${morning[RANDOM%${#morning[@]}]}"
+  else
+    evening=('haha evening >_<' 'emacs is an os' 'sudo rm -rf /*' 'wher coffe' 'oooo sunset' 'i want some tea' 'please put some cake in the cd drive' 'm4st3r h4xx0r' 'katt0 is 3lit3' 'honkhonk' 'good evening >_<' 'dont mind me im just a script hehe >_<' 'please gib cake >_<')
+    echo ""
+    printLine "$Alignment" "$boldText $sysPageColor%s$resetColor" "${evening[RANDOM%${#evening[@]}]}"
+  fi
 }
 
 getParams() {
@@ -121,10 +136,10 @@ mkConfig() {
 }
 
 getPlaying() {
-  title="$(playerctl metadata | grep title | cut -b 40-)"
-  artist="$(playerctl metadata | grep artist | cut -b 40-)"
-  player="$(playerctl metadata | grep artist | awk '{print $1}')"
-  if [[ ! -z "$player" ]] && [[ "$player" != "firefox" ]] && [[ "$player" != "chromium" ]]; then
+  title="$(playerctl metadata -s -i firefox,chromium | grep title | cut -b 40-)"
+  artist="$(playerctl metadata -s -i firefox,chromium | grep artist | cut -b 40-)"
+  player="$(playerctl metadata -s -i firefox,chromium | grep artist | awk '{print $1}' 2>/dev/null)"
+  if [[ "$player" != "" ]]; then
     printLine "$Alignment" "$boldText $sysPageColor%s$resetColor" "now playing: $artist - $title"
   fi
 }
