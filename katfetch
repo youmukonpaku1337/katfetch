@@ -62,7 +62,6 @@ err() {
 niceMessage() {
   timern=$(date +'%p')
   if [[ "${timern^^}" == "AM" ]]; then
-    echo a
     morning=('gib coffe' 'good mernink >_<' 'oooo sunrise' 'i wonder if it is night or day' 'im just a script dont mind me' 'haha ai will take over world' 'sudo rm -rf /*' 'honk' 'honkhonk' 'very stoopid msg' 'u drink tea? >_<')
     echo ""
     printLine "$Alignment" "$boldText $sysPageColor%s$resetColor" "${morning[RANDOM%${#morning[@]}]}"
@@ -199,10 +198,51 @@ getGPU() {
     if [[ "${name}" == *"Display"* ]] || [[ "${name}" == *"3D"* ]] || [[ "${name}" == *"VGA"* ]]; then
       IFS='"'
       arr=($name)
-      gpu_cmd+=("${arr[3]} ${arr[5]}")
+      gpu_cmd+=("${arr[3]} ${arr[5]}\n")
     fi
   done <<<"$(lspci -mm)"
   for gpu in "${gpu_cmd[@]}"; do
+    # GPU shorthand tests.
+    [[ "$gpu_type" == "dedicated" && "$gpu" == *Intel* ]] || [[ "$gpu_type" == "integrated" && ! "$gpu" == *Intel* ]] && {
+      unset -v gpu
+      continue
+    }
+    case $gpu in
+    *"Advanced"*)
+      brand="${gpu/*AMD*ATI*/AMD ATI}"
+      brand="${brand:-${gpu/*AMD*/AMD}}"
+      brand="${brand:-${gpu/*ATI*/ATi}}"
+
+      gpu="${gpu/\[AMD\/ATI\] /}"
+      gpu="${gpu/\[AMD\] /}"
+      gpu="${gpu/OEM /}"
+      gpu="${gpu/Advanced Micro Devices, Inc./}"
+      gpu="${gpu/*\[/}"
+      gpu="${gpu/\]*/}"
+      gpu="$brand $gpu"
+      ;;
+
+    *"NVIDIA"*)
+      gpu="${gpu/*\[/}"
+      gpu="${gpu/\]*/}"
+      gpu="NVIDIA $gpu"
+      ;;
+
+    *"Intel"*)
+      gpu="${gpu/*Intel/Intel}"
+      gpu="${gpu/\(R\)/}"
+      gpu="${gpu/Corporation/}"
+      gpu="${gpu/ \(*/}"
+      gpu="${gpu/Integrated Graphics Controller/}"
+      gpu="${gpu/*Xeon*/Intel HD Graphics}"
+      gpu="${gpu/*CometLake*/Intel HD Graphics}"
+      ;;
+
+    *)
+      continue
+      ;;
+    esac
+    
     printLine "$Alignment" "$boldText $sysPageColor%s$resetColor" "gpu: $gpu"
   done
 }
