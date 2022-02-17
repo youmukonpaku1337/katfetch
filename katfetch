@@ -125,7 +125,6 @@ getPlaying() {
   artist="$(playerctl metadata | grep artist | cut -b 40-)"
   player="$(playerctl metadata | grep artist | awk '{print $1}')"
   if [[ ! -z "$player" ]] && [[ "$player" != "firefox" ]] && [[ "$player" != "chromium" ]]; then
-    printLine "$Alignment" "$boldText $sysPageColor%s$resetColor" "player: $player"
     printLine "$Alignment" "$boldText $sysPageColor%s$resetColor" "now playing: $artist - $title"
   fi
 }
