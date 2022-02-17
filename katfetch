@@ -198,7 +198,7 @@ getGPU() {
     if [[ "${name}" == *"Display"* ]] || [[ "${name}" == *"3D"* ]] || [[ "${name}" == *"VGA"* ]]; then
       IFS='"'
       arr=($name)
-      gpu_cmd+=("${arr[3]} ${arr[5]}\n")
+      gpu_cmd+=("${arr[3]} ${arr[5]}")
     fi
   done <<<"$(lspci -mm)"
   for gpu in "${gpu_cmd[@]}"; do
