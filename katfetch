@@ -25,6 +25,14 @@ bannerTextColor=$(tput setaf 6)
 #center=true
 #file=~/.ascii
 
+# for ascii colors, must be a tput setaf or ansi color
+c1=""
+c2=""
+c3=""
+c4=""
+c5=""
+c6=""
+
 # You can edit this, even add yor own functions in this file, but
 # take note: the printAsciiOrFiglet is for printing the ascii or figlet and you shouldn't touch it
 # Also, do not touch the getParams unless you know what you're doing
@@ -136,11 +144,12 @@ mkConfig() {
 
 getPlaying() {
   if [[ -x "$(command -v playerctl)" ]]; then
-    title="$(playerctl metadata -s -i firefox,chromium | grep title | cut -b 40-)"
-    artist="$(playerctl metadata -s -i firefox,chromium | grep artist | cut -b 40-)"
-    player="$(playerctl metadata -s -i firefox,chromium | grep artist | awk '{print $1}' 2>/dev/null)"
+    player="$(playerctl metadata -s -i firefox,chromium | grep artist | awk '{print $1}')"
+    len=$(expr ${#player} + 28)
+    song="$(playerctl metadata -s -i firefox,chromium | grep title | cut -b ${len}-)"
+    artist="$(playerctl metadata -s -i firefox,chromium | grep artist | cut -b ${len}-)"
     if [[ "$player" != "" ]]; then
-      printLine "$Alignment" "$boldText $sysPageColor%s$resetColor" "now playing: $artist - $title"
+      printLine "$Alignment" "$boldText $sysPageColor%s$resetColor" "now playing: $artist - $song"
     fi
   fi
 }
@@ -347,6 +356,15 @@ getInit() {
   printLine "$Alignment" "$boldText $sysPageColor%s$resetColor" "init: $init"
 }
 
+cleanAsciiColors() {
+  line="${line//\$\{c1\}/$c1}"
+  line="${line//\$\{c2\}/$c2}"
+  line="${line//\$\{c3\}/$c3}"
+  line="${line//\$\{c4\}/$c4}"
+  line="${line//\$\{c5\}/$c5}"
+  line="${line//\$\{c6\}/$c6}"
+}
+
 printAsciiOrFiglet() {
   if [[ "$1" == "" ]]; then
     if $center; then
@@ -363,11 +381,10 @@ printAsciiOrFiglet() {
   else
     if $center; then
       Alignment='Center'
-      echo -e $bannerTextColor
       while IFS= read -r line; do
+        cleanAsciiColors
         printLine "$Alignment" "$boldText $bannerTextColor%s$resetColor" "$line"
       done<<<"$(cat $1)"
-      echo -e $resetColor
     else
       Alignment='Left'
       echo -e $bannerTextColor
