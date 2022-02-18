@@ -364,7 +364,7 @@ printAsciiOrFiglet() {
     if $center; then
       Alignment='Center'
       echo -e $bannerTextColor
-      while read -r line; do
+      while IFS= read -r line; do
         printLine "$Alignment" "$boldText $bannerTextColor%s$resetColor" "$line"
       done<<<"$(cat $1)"
       echo -e $resetColor
