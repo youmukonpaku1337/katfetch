@@ -331,8 +331,8 @@ getMemory() {
 
 getDisks() {
   diskcmd=$(mount | grep '^/')
-  disks=$(while read -r line; do df -Th $(echo $line | awk '{print $3}') | grep '/'; done <<<"$diskcmd")
-  disk_size=$(df -Th | grep "/dev" | awk '{print $3}')
+  disks=$(while read -r line; do df -Th $(echo $line | awk '{print $3}')  2>/dev/null | grep '/'; done <<<"$diskcmd")
+  disk_size=$(df -Th  2>/dev/null| grep "/dev" | awk '{print $3}')
   while read -r line; do
     fs=$(echo "$line" | awk '{print $2}')
     disk_used=$(echo "$line" | awk '{print $4}')
