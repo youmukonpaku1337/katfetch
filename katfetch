@@ -25,14 +25,6 @@ bannerTextColor=$(tput setaf 6)
 #center=true
 #file=~/.ascii
 
-# for ascii colors, must be a tput setaf or ansi color
-c1=""
-c2=""
-c3=""
-c4=""
-c5=""
-c6=""
-
 # You can edit this, even add yor own functions in this file, but
 # take note: the printAsciiOrFiglet is for printing the ascii or figlet and you shouldn't touch it
 # Also, do not touch the getParams unless you know what you're doing
@@ -356,14 +348,6 @@ getInit() {
   printLine "$Alignment" "$boldText $sysPageColor%s$resetColor" "init: $init"
 }
 
-cleanAsciiColors() {
-  line="${line//\$\{c1\}/$c1}"
-  line="${line//\$\{c2\}/$c2}"
-  line="${line//\$\{c3\}/$c3}"
-  line="${line//\$\{c4\}/$c4}"
-  line="${line//\$\{c5\}/$c5}"
-  line="${line//\$\{c6\}/$c6}"
-}
 
 printAsciiOrFiglet() {
   if [[ "$1" == "" ]]; then
@@ -381,8 +365,7 @@ printAsciiOrFiglet() {
   else
     if $center; then
       Alignment='Center'
-      while IFS= read -r line; do
-        cleanAsciiColors
+      while read -r line; do
         printLine "$Alignment" "$boldText $bannerTextColor%s$resetColor" "$line"
       done<<<"$(cat $1)"
     else
