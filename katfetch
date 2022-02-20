@@ -136,10 +136,10 @@ mkConfig() {
 
 getPlaying() {
   if [[ -x "$(command -v playerctl)" ]]; then
-    player="$(playerctl metadata -s -i firefox,chromium | grep artist | awk '{print $1}')"
+    player="$(playerctl metadata -s | grep artist | awk '{print $1}')"
     len=$(expr ${#player} + 28)
-    song="$(playerctl metadata -s -i firefox,chromium | grep title | cut -b ${len}-)"
-    artist="$(playerctl metadata -s -i firefox,chromium | grep artist | cut -b ${len}-)"
+    song="$(playerctl metadata -s | grep title | cut -b ${len}-)"
+    artist="$(playerctl metadata -s | grep artist | cut -b ${len}-)"
     if [[ "$player" != "" ]]; then
       printLine "$Alignment" "$boldText $sysPageColor%s$resetColor" "now playing: $artist - $song"
     fi
@@ -232,7 +232,7 @@ getGPU() {
     *"Intel"*)
       gpu="${gpu/*Intel/Intel}"
       gpu="${gpu/\(R\)/}"
-      gpu="${gpu/Corporation/}"
+      gpu="${gpu/Corporation /}"
       gpu="${gpu/ \(*/}"
       gpu="${gpu/Integrated Graphics Controller/}"
       ;;
