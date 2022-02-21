@@ -35,3 +35,10 @@ Note that configs other than ~/.config/katfetch/config should not contain the if
 # License
 This lil' script is licensed under the WTFPL, a great license that allows you to pretty much fuckin' anything. Get more info at http://www.wtfpl.net/
 ![logo-220x1601](https://user-images.githubusercontent.com/50289495/155028333-17da751d-d7b8-421b-9e79-eebe3b00ab54.png)
+
+Note that this project also has the MIT license included for compatibility.
+
+# Credit
+Thanks to me0wing-katt0 (Egor Scherbakov), TruncatedDinosour (Ari Archer) and The-Repo-Club (Wayne Wesley)
+
+hjklhjkl
