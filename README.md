@@ -31,3 +31,6 @@ flags:
 You can edit the ~/.config/katfetch/config or your own config file to reorder functions, add your own functions, or remove some.
 You can also set ascii art, color and to be centered or not.
 Note that configs other than ~/.config/katfetch/config should not contain the if else part since that recurses
+
+# License
+This lil' script is licensed under the WTFPL, a great license that allows you to pretty much fuckin' anything
