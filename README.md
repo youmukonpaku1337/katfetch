@@ -33,6 +33,5 @@ You can also set ascii art, color and to be centered or not.
 Note that configs other than ~/.config/katfetch/config should not contain the if else part since that recurses
 
 # License
-This lil' script is licensed under the WTFPL, a great license that allows you to pretty much fuckin' anything
+This lil' script is licensed under the WTFPL, a great license that allows you to pretty much fuckin' anything. get more info at http://www.wtfpl.net/
 ![logo-220x1601](https://user-images.githubusercontent.com/50289495/155028333-17da751d-d7b8-421b-9e79-eebe3b00ab54.png)
-get more info at http://www.wtfpl.net/
