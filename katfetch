@@ -16,6 +16,7 @@ flags:
 -a or --art: specify ascii art
 "
 read -rd '' config <<'EOF'
+#!/usr/bin/env bash
 # This is the katfetch config file
 
 # These are the default colors, you can set them to a tput setaf number or an ansi
@@ -34,6 +35,7 @@ getHost
 getUserAndHostname
 getPkgs
 getDistro
+getWM
 getInit
 getKernel
 getCPU
@@ -57,6 +59,18 @@ boldText=$(tput bold)
 err() {
   printf '%s\n' "$2" 1>&2
   [ "$1" -gt 0 ] && exit ""$"1"
+}
+
+getWM() {
+  if [[ $XDG_SESSION_TYPE == "wayland" ]]; then
+    wm=$(echo $(lsof ${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY:-wayland-0} | grep wayland | grep .lock | awk '{print $2}') | sed 's/\/usr//g' | sed 's/\/bin\///g')
+    
+  elif [[ $XDG_SESSION_TYPE == "x11" ]]; then
+    wm=$XDG_CURRENT_DESKTOP
+  else 
+    wm="none"
+  fi
+  printLine "$Alignment" "$boldText $sysPageColor%s$resetColor" "de/wm: $wm"
 }
 
 niceMessage() {
