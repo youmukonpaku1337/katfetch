@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # set the variables to get distro name, distro id, etc
 source /etc/os-release
+if [[ -d /bedrock ]]; then
+  NAME="Bedrock Linux"
+  PRETTY_NAME="Bedrock Linux 0.7.26 Poki"
+fi
 packages=0
 columns=$(tput cols)
 memory_unit="gib"
