@@ -150,8 +150,8 @@ getPkgs() {
   # check for package managers in here and exit if none
   if [[ -x "$(command -v apk)" ]]; then
     ((packages = packages + $(apk list --installed | wc -l)))
-  elif [[ -x "$(command -v apt)" ]]; then
-    ((packages = packages + $(apt list --installed | wc -l)))
+  elif [[ -x "$(command -v dpkg)" ]]; then
+    ((packages = packages + $(dpkg -l | wc -l)))
   elif [[ -x "$(command -v dnf)" ]]; then
     ((packages = packages + $(dnf list --installed | grep -c -v '^Installed Packages$')))
   elif [[ -x "$(command -v pacman)" ]]; then
