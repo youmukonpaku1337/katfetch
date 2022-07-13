@@ -3,7 +3,7 @@
 source /etc/os-release
 if [[ -d /bedrock ]]; then
   NAME="Bedrock Linux"
-  PRETTY_NAME="Bedrock Linux 0.7.26 Poki"
+  PRETTY_NAME="Bedrock Linux 0.7 Poki"
 fi
 packages=0
 columns=$(tput cols)
