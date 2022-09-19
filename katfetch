@@ -9,7 +9,7 @@ packages=0
 columns=$(tput cols)
 memory_unit="gib"
 if [[ -z "$configpath" ]]; then
-  configpath=~/.config/katfetch/config
+  configpath=$HOME/.config/katfetch/config
 fi
 usage="
 you can specify config path in configpath env var
@@ -28,7 +28,7 @@ read -rd '' config <<'EOF'
 sysPageColor=$(tput setaf 6)
 bannerTextColor=$(tput setaf 6)
 #center=true
-#file=~/.ascii
+#file=$HOME/.ascii
 
 # You can edit this, even add yor own functions in this file, but
 # take note: the printAsciiOrFiglet is for printing the ascii or figlet and you shouldn't touch it
@@ -146,9 +146,9 @@ printLine() {
 
 mkConfig() {
   # print config to config file if nonexistent
-  if [[ ! -f ~/.config/katfetch/config ]]; then
-    mkdir ~/.config/katfetch 2>/dev/null
-    printf '%b' "$config" > ~/.config/katfetch/config
+  if [[ ! -f $HOME/.config/katfetch/config ]]; then
+    mkdir $HOME/.config/katfetch 2>/dev/null
+    printf '%b' "$config" > $HOME/.config/katfetch/config
   fi
 }
 
